@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User model - handles all user types (admin, owner, pharmacist)
+model User {
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  password           String
+  name               String
+  role               String   // 'admin', 'owner', 'pharmacist'
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Owner-specific fields
+  pharmacyName       String?
+  address            String?
+  phone              String?
+
+  // Pharmacist-specific fields
+  licenseNumber      String?
+  verificationStatus String?  @default("pending") // 'pending', 'verified', 'rejected'
+  yearsExperience    Int?
+  specialties        String?  // Stored as JSON array string
+  bio                String?
+
+  // Relations
+  shifts             Shift[]       @relation("OwnerShifts")
+  applications       Application[] @relation("PharmacistApplications")
+
+  @@index([email])
+  @@index([role])
+}
+
+// Shift model - represents a pharmacy shift posting
+model Shift {
+  id           String   @id @default(cuid())
+  ownerId      String
+  owner        User     @relation("OwnerShifts", fields: [ownerId], references: [id])
+  
+  pharmacyName String
+  location     String
+  startDate    String   // Format: YYYY-MM-DD
+  endDate      String   // Format: YYYY-MM-DD
+  startTime    String   // Format: HH:MM
+  endTime      String   // Format: HH:MM
+  hoursPerDay  Int
+  hourlyRate   Float    // What pharmacist earns
+  totalHours   Int
+  
+  description  String?
+  requirements String?  // Stored as JSON array string
+  status       String   @default("open") // 'open', 'filled', 'cancelled'
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  applications Application[]
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+// Application model - represents a pharmacist's application to a shift
+model Application {
+  id           String   @id @default(cuid())
+  shiftId      String
+  shift        Shift    @relation(fields: [shiftId], references: [id])
+  pharmacistId String
+  pharmacist   User     @relation("PharmacistApplications", fields: [pharmacistId], references: [id])
+  
+  status       String   @default("pending") // 'pending', 'approved', 'rejected', 'withdrawn'
+  message      String?
+  
+  appliedAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([shiftId, pharmacistId]) // Prevent duplicate applications
+  @@index([shiftId])
+  @@index([pharmacistId])
+  @@index([status])
+}

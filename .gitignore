@@ -38,3 +38,11 @@ next-env.d.ts
 .vscode/
 *.swp
 *.swo
+
+/src/generated/prisma
+
+# Database
+prisma/dev.db
+prisma/dev.db-journal
+*.db
+*.db-journal

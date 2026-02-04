@@ -4,13 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import {
-    getShiftsByOwner,
-    getApplicationsForOwner,
-    updateApplicationStatus,
-    getUserById,
-    getEnrichedApplications
-} from '@/lib/dataStore';
+import { PLATFORM_FEE_PERCENTAGE, calculateOwnerCost } from '@/lib/dataStore';
 import ShiftCard from '@/components/ShiftCard';
 import StatusBadge from '@/components/StatusBadge';
 import styles from './page.module.css';
@@ -20,8 +14,7 @@ export default function OwnerDashboard() {
     const router = useRouter();
     const [shifts, setShifts] = useState([]);
     const [applications, setApplications] = useState([]);
-    const [selectedShift, setSelectedShift] = useState(null);
-    const [showApplicationsModal, setShowApplicationsModal] = useState(false);
+    const [updating, setUpdating] = useState(null);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -37,34 +30,44 @@ export default function OwnerDashboard() {
         }
     }, [user, loading, isOwner, router]);
 
-    const loadData = () => {
-        const ownerShifts = getShiftsByOwner(user.id);
-        setShifts(ownerShifts);
+    const loadData = async () => {
+        try {
+            const [shiftsRes, applicationsRes] = await Promise.all([
+                fetch(`/api/shifts?ownerId=${user.id}`),
+                fetch(`/api/applications?ownerId=${user.id}`)
+            ]);
 
-        const ownerApps = getApplicationsForOwner(user.id);
-        setApplications(getEnrichedApplications(ownerApps));
+            if (shiftsRes.ok) {
+                setShifts(await shiftsRes.json());
+            }
+            if (applicationsRes.ok) {
+                setApplications(await applicationsRes.json());
+            }
+        } catch (error) {
+            console.error('Error loading data:', error);
+        }
     };
 
-    const handleViewApplications = (shift) => {
-        setSelectedShift(shift);
-        setShowApplicationsModal(true);
+    const handleApplicationAction = async (applicationId, status) => {
+        setUpdating(applicationId);
+        try {
+            const response = await fetch(`/api/applications/${applicationId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+
+            if (response.ok) {
+                await loadData();
+            }
+        } catch (error) {
+            console.error('Error updating application:', error);
+        } finally {
+            setUpdating(null);
+        }
     };
 
-    const handleApprove = (applicationId) => {
-        updateApplicationStatus(applicationId, 'approved');
-        loadData();
-    };
-
-    const handleReject = (applicationId) => {
-        updateApplicationStatus(applicationId, 'rejected');
-        loadData();
-    };
-
-    const getShiftApplications = (shiftId) => {
-        return applications.filter(app => app.shiftId === shiftId);
-    };
-
-    const pendingApplications = applications.filter(app => app.status === 'pending');
+    const pendingApplications = applications.filter(a => a.status === 'pending');
     const openShifts = shifts.filter(s => s.status === 'open');
     const filledShifts = shifts.filter(s => s.status === 'filled');
 
@@ -81,20 +84,19 @@ export default function OwnerDashboard() {
             <div className={styles.container}>
                 <header className={styles.header}>
                     <div>
-                        <h1 className={styles.title}>Owner Dashboard</h1>
-                        <p className={styles.subtitle}>Manage your shifts and applications for {user.pharmacyName}</p>
+                        <h1 className={styles.title}>Welcome, {user.pharmacyName || user.name}</h1>
+                        <p className={styles.subtitle}>Manage your shifts and review applications</p>
                     </div>
-                    <Link href="/owner/post-shift" className={styles.postShiftBtn}>
+                    <Link href="/owner/post-shift" className={styles.postBtn}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="16"></line>
-                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
                         </svg>
                         Post New Shift
                     </Link>
                 </header>
 
-                {/* Stats Overview */}
+                {/* Stats Grid */}
                 <div className={styles.statsGrid}>
                     <div className={styles.statCard}>
                         <div className={styles.statIcon}>
@@ -111,7 +113,7 @@ export default function OwnerDashboard() {
                         </div>
                     </div>
 
-                    <div className={`${styles.statCard} ${styles.open}`}>
+                    <div className={`${styles.statCard} ${styles.primary}`}>
                         <div className={styles.statIcon}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <circle cx="12" cy="12" r="10"></circle>
@@ -124,12 +126,11 @@ export default function OwnerDashboard() {
                         </div>
                     </div>
 
-                    <div className={`${styles.statCard} ${styles.pending}`}>
+                    <div className={`${styles.statCard} ${styles.warning}`}>
                         <div className={styles.statIcon}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="8.5" cy="7" r="4"></circle>
-                                <polyline points="17 11 19 13 23 9"></polyline>
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
                             </svg>
                         </div>
                         <div className={styles.statInfo}>
@@ -138,7 +139,7 @@ export default function OwnerDashboard() {
                         </div>
                     </div>
 
-                    <div className={`${styles.statCard} ${styles.filled}`}>
+                    <div className={`${styles.statCard} ${styles.success}`}>
                         <div className={styles.statIcon}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -152,27 +153,77 @@ export default function OwnerDashboard() {
                     </div>
                 </div>
 
-                {/* Pending Applications Alert */}
-                {pendingApplications.length > 0 && (
-                    <div className={styles.alertCard}>
-                        <div className={styles.alertIcon}>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="8" x2="12" y2="12"></line>
-                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                            </svg>
-                        </div>
-                        <div className={styles.alertContent}>
-                            <h3>You have {pendingApplications.length} pending application{pendingApplications.length > 1 ? 's' : ''}</h3>
-                            <p>Review and approve applicants to fill your shifts.</p>
-                        </div>
-                    </div>
-                )}
-
-                {/* My Shifts Section */}
+                {/* Pending Applications Section */}
                 <section className={styles.section}>
                     <div className={styles.sectionHeader}>
-                        <h2 className={styles.sectionTitle}>My Posted Shifts</h2>
+                        <h2 className={styles.sectionTitle}>
+                            Pending Applications
+                            {pendingApplications.length > 0 && (
+                                <span className={styles.badge}>{pendingApplications.length}</span>
+                            )}
+                        </h2>
+                    </div>
+
+                    {pendingApplications.length === 0 ? (
+                        <div className={styles.emptyState}>
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                            <p>No pending applications</p>
+                        </div>
+                    ) : (
+                        <div className={styles.applicationsList}>
+                            {pendingApplications.map((app) => (
+                                <div key={app.id} className={styles.applicationCard}>
+                                    <div className={styles.applicationInfo}>
+                                        <div className={styles.applicantInfo}>
+                                            <div className={styles.avatar}>
+                                                {app.pharmacist?.name?.charAt(0) || '?'}
+                                            </div>
+                                            <div>
+                                                <h4>{app.pharmacist?.name || 'Unknown'}</h4>
+                                                <p>{app.pharmacist?.email}</p>
+                                                <div className={styles.applicantMeta}>
+                                                    <span>{app.pharmacist?.yearsExperience || 0} years exp.</span>
+                                                    <span>License: {app.pharmacist?.licenseNumber}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className={styles.shiftInfo}>
+                                            <span className={styles.shiftLabel}>Applied for:</span>
+                                            <span className={styles.shiftDate}>
+                                                {app.shift?.startDate} • ${app.shift?.hourlyRate}/hr
+                                            </span>
+                                            <span className={styles.shiftLocation}>{app.shift?.location}</span>
+                                        </div>
+                                    </div>
+                                    <div className={styles.applicationActions}>
+                                        <button
+                                            className={`${styles.btn} ${styles.btnSuccess}`}
+                                            onClick={() => handleApplicationAction(app.id, 'approved')}
+                                            disabled={updating === app.id}
+                                        >
+                                            {updating === app.id ? 'Processing...' : 'Approve'}
+                                        </button>
+                                        <button
+                                            className={`${styles.btn} ${styles.btnDanger}`}
+                                            onClick={() => handleApplicationAction(app.id, 'rejected')}
+                                            disabled={updating === app.id}
+                                        >
+                                            Reject
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
+
+                {/* Your Shifts Section */}
+                <section className={styles.section}>
+                    <div className={styles.sectionHeader}>
+                        <h2 className={styles.sectionTitle}>Your Shifts</h2>
                     </div>
 
                     {shifts.length === 0 ? (
@@ -184,120 +235,24 @@ export default function OwnerDashboard() {
                                 <line x1="3" y1="10" x2="21" y2="10"></line>
                             </svg>
                             <h3>No shifts posted yet</h3>
-                            <p>Post your first shift to start receiving applications from verified pharmacists.</p>
+                            <p>Post your first shift to start receiving applications.</p>
                             <Link href="/owner/post-shift" className={styles.emptyStateBtn}>
                                 Post a Shift
                             </Link>
                         </div>
                     ) : (
                         <div className={styles.shiftsGrid}>
-                            {shifts.map((shift) => {
-                                const shiftApps = getShiftApplications(shift.id);
-                                const pendingCount = shiftApps.filter(a => a.status === 'pending').length;
-
-                                return (
-                                    <div key={shift.id} className={styles.shiftWrapper}>
-                                        <ShiftCard
-                                            shift={shift}
-                                            viewMode="owner"
-                                            onViewApplications={handleViewApplications}
-                                        />
-                                        {pendingCount > 0 && (
-                                            <div className={styles.applicationsBadge}>
-                                                {pendingCount} pending application{pendingCount > 1 ? 's' : ''}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
+                            {shifts.map((shift) => (
+                                <ShiftCard
+                                    key={shift.id}
+                                    shift={shift}
+                                    viewMode="owner"
+                                    applicationCount={applications.filter(a => a.shiftId === shift.id).length}
+                                />
+                            ))}
                         </div>
                     )}
                 </section>
-
-                {/* Applications Modal */}
-                {showApplicationsModal && selectedShift && (
-                    <div className={styles.modal} onClick={() => setShowApplicationsModal(false)}>
-                        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                            <div className={styles.modalHeader}>
-                                <h2>Applications for Shift</h2>
-                                <button
-                                    className={styles.closeBtn}
-                                    onClick={() => setShowApplicationsModal(false)}
-                                >
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <div className={styles.shiftInfo}>
-                                <p><strong>{selectedShift.pharmacyName}</strong></p>
-                                <p>{selectedShift.startDate} • {selectedShift.startTime} - {selectedShift.endTime}</p>
-                            </div>
-
-                            <div className={styles.applicationsList}>
-                                {getShiftApplications(selectedShift.id).length === 0 ? (
-                                    <div className={styles.noApplications}>
-                                        <p>No applications yet for this shift.</p>
-                                    </div>
-                                ) : (
-                                    getShiftApplications(selectedShift.id).map((app) => (
-                                        <div key={app.id} className={styles.applicationCard}>
-                                            <div className={styles.applicantInfo}>
-                                                <div className={styles.avatar}>
-                                                    {app.pharmacist?.name?.charAt(0) || '?'}
-                                                </div>
-                                                <div>
-                                                    <h4>{app.pharmacist?.name || 'Unknown'}</h4>
-                                                    <p>{app.pharmacist?.yearsExperience || 0} years experience</p>
-                                                    {app.pharmacist?.specialties && (
-                                                        <div className={styles.specialties}>
-                                                            {app.pharmacist.specialties.map((s, i) => (
-                                                                <span key={i} className={styles.specialty}>{s}</span>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {app.message && (
-                                                <p className={styles.applicationMessage}>"{app.message}"</p>
-                                            )}
-
-                                            <div className={styles.applicationFooter}>
-                                                <StatusBadge status={app.status} />
-                                                {app.status === 'pending' && (
-                                                    <div className={styles.applicationActions}>
-                                                        <button
-                                                            className={`${styles.actionBtn} ${styles.approveBtn}`}
-                                                            onClick={() => handleApprove(app.id)}
-                                                        >
-                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                                <polyline points="20 6 9 17 4 12"></polyline>
-                                                            </svg>
-                                                            Approve
-                                                        </button>
-                                                        <button
-                                                            className={`${styles.actionBtn} ${styles.rejectBtn}`}
-                                                            onClick={() => handleReject(app.id)}
-                                                        >
-                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                                                            </svg>
-                                                            Reject
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );

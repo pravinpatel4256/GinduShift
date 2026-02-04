@@ -4,11 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import {
-    searchShifts,
-    createApplication,
-    getApplicationsByPharmacist
-} from '@/lib/dataStore';
 import ShiftCard from '@/components/ShiftCard';
 import FilterPanel from '@/components/FilterPanel';
 import styles from './page.module.css';
@@ -36,9 +31,32 @@ export default function ShiftSearchPage() {
         }
     }, [user, loading, isPharmacist, router]);
 
-    const loadData = (filters = {}) => {
-        setShifts(searchShifts(filters));
-        setMyApplications(getApplicationsByPharmacist(user.id));
+    const loadData = async (filters = {}) => {
+        try {
+            // Build query string for filters
+            const params = new URLSearchParams({ search: 'true' });
+            if (filters.minRate) params.append('minRate', filters.minRate);
+            if (filters.maxRate) params.append('maxRate', filters.maxRate);
+            if (filters.minDuration) params.append('minDuration', filters.minDuration);
+            if (filters.maxDuration) params.append('maxDuration', filters.maxDuration);
+            if (filters.location) params.append('location', filters.location);
+            if (filters.startDate) params.append('startDate', filters.startDate);
+            if (filters.endDate) params.append('endDate', filters.endDate);
+
+            const [shiftsRes, applicationsRes] = await Promise.all([
+                fetch(`/api/shifts?${params.toString()}`),
+                fetch(`/api/applications?pharmacistId=${user.id}`)
+            ]);
+
+            if (shiftsRes.ok) {
+                setShifts(await shiftsRes.json());
+            }
+            if (applicationsRes.ok) {
+                setMyApplications(await applicationsRes.json());
+            }
+        } catch (error) {
+            console.error('Error loading data:', error);
+        }
     };
 
     const handleFilter = (filters) => {
@@ -53,22 +71,31 @@ export default function ShiftSearchPage() {
 
         setIsApplying(shift.id);
 
-        const result = createApplication({
-            shiftId: shift.id,
-            pharmacistId: user.id,
-            message: 'I am interested in this position and available for the specified dates.'
-        });
+        try {
+            const response = await fetch('/api/applications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    shiftId: shift.id,
+                    pharmacistId: user.id,
+                    message: 'I am interested in this position and available for the specified dates.'
+                })
+            });
 
-        setTimeout(() => {
-            setIsApplying(null);
+            const result = await response.json();
 
-            if (result.error) {
-                showToast(result.error);
+            if (!response.ok) {
+                showToast(result.error || 'Failed to apply');
             } else {
                 showToast('Application submitted successfully!');
                 loadData();
             }
-        }, 500);
+        } catch (error) {
+            console.error('Error applying:', error);
+            showToast('Error submitting application');
+        } finally {
+            setIsApplying(null);
+        }
     };
 
     const showToast = (message) => {

@@ -4,10 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import {
-    getApplicationsByPharmacist,
-    getEnrichedApplications
-} from '@/lib/dataStore';
 import StatusBadge from '@/components/StatusBadge';
 import styles from './page.module.css';
 
@@ -30,9 +26,15 @@ export default function PharmacistDashboard() {
         }
     }, [user, loading, isPharmacist, router]);
 
-    const loadData = () => {
-        const apps = getApplicationsByPharmacist(user.id);
-        setApplications(getEnrichedApplications(apps));
+    const loadData = async () => {
+        try {
+            const response = await fetch(`/api/applications?pharmacistId=${user.id}`);
+            if (response.ok) {
+                setApplications(await response.json());
+            }
+        } catch (error) {
+            console.error('Error loading applications:', error);
+        }
     };
 
     const pendingApplications = applications.filter(a => a.status === 'pending');

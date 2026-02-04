@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { createShift, calculateOwnerCost, PLATFORM_FEE_PERCENTAGE } from '@/lib/dataStore';
+import { calculateOwnerCost, PLATFORM_FEE_PERCENTAGE } from '@/lib/dataStore';
 import styles from './page.module.css';
 
 export default function PostShiftPage() {
@@ -85,11 +85,23 @@ export default function PostShiftPage() {
             requirements: requirementsArray
         };
 
-        createShift(shiftData);
+        try {
+            const response = await fetch('/api/shifts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(shiftData)
+            });
 
-        setTimeout(() => {
-            router.push('/owner');
-        }, 500);
+            if (response.ok) {
+                router.push('/owner');
+            } else {
+                console.error('Failed to create shift');
+                setIsSubmitting(false);
+            }
+        } catch (error) {
+            console.error('Error creating shift:', error);
+            setIsSubmitting(false);
+        }
     };
 
     if (loading || !user) {

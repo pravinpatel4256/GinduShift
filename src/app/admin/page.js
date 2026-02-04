@@ -3,11 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import {
-    getPharmacists,
-    updateUserVerification,
-    getAdminStats
-} from '@/lib/dataStore';
+import { PLATFORM_FEE_PERCENTAGE, calculateOwnerCost } from '@/lib/dataStore';
 import StatusBadge from '@/components/StatusBadge';
 import styles from './page.module.css';
 
@@ -16,7 +12,7 @@ export default function AdminDashboard() {
     const router = useRouter();
     const [pharmacists, setPharmacists] = useState([]);
     const [stats, setStats] = useState(null);
-    const [filter, setFilter] = useState('all'); // all, pending, verified, rejected
+    const [updating, setUpdating] = useState(null);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -27,28 +23,50 @@ export default function AdminDashboard() {
             router.push('/');
             return;
         }
-        loadData();
+        if (user) {
+            loadData();
+        }
     }, [user, loading, isAdmin, router]);
 
-    const loadData = () => {
-        setPharmacists(getPharmacists());
-        setStats(getAdminStats());
+    const loadData = async () => {
+        try {
+            const [pharmacistsRes, statsRes] = await Promise.all([
+                fetch('/api/users?role=pharmacist'),
+                fetch('/api/users?stats=admin')
+            ]);
+
+            if (pharmacistsRes.ok) {
+                setPharmacists(await pharmacistsRes.json());
+            }
+            if (statsRes.ok) {
+                setStats(await statsRes.json());
+            }
+        } catch (error) {
+            console.error('Error loading data:', error);
+        }
     };
 
-    const handleVerify = (pharmacistId) => {
-        updateUserVerification(pharmacistId, 'verified');
-        loadData();
+    const handleVerification = async (pharmacistId, status) => {
+        setUpdating(pharmacistId);
+        try {
+            const response = await fetch(`/api/users/${pharmacistId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ verificationStatus: status })
+            });
+
+            if (response.ok) {
+                await loadData();
+            }
+        } catch (error) {
+            console.error('Error updating verification:', error);
+        } finally {
+            setUpdating(null);
+        }
     };
 
-    const handleReject = (pharmacistId) => {
-        updateUserVerification(pharmacistId, 'rejected');
-        loadData();
-    };
-
-    const filteredPharmacists = pharmacists.filter(p => {
-        if (filter === 'all') return true;
-        return p.verificationStatus === filter;
-    });
+    const pendingPharmacists = pharmacists.filter(p => p.verificationStatus === 'pending');
+    const verifiedPharmacists = pharmacists.filter(p => p.verificationStatus === 'verified');
 
     if (loading || !user) {
         return (
@@ -68,7 +86,7 @@ export default function AdminDashboard() {
                     </div>
                 </header>
 
-                {/* Stats Cards */}
+                {/* Stats Grid */}
                 <div className={styles.statsGrid}>
                     <div className={styles.statCard}>
                         <div className={styles.statIcon}>
@@ -85,20 +103,21 @@ export default function AdminDashboard() {
                         </div>
                     </div>
 
-                    <div className={`${styles.statCard} ${styles.pending}`}>
+                    <div className={`${styles.statCard} ${styles.warning}`}>
                         <div className={styles.statIcon}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <circle cx="12" cy="12" r="10"></circle>
-                                <polyline points="12 6 12 12 16 14"></polyline>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
                             </svg>
                         </div>
                         <div className={styles.statInfo}>
                             <span className={styles.statValue}>{stats?.pendingVerifications || 0}</span>
-                            <span className={styles.statLabel}>Pending Verifications</span>
+                            <span className={styles.statLabel}>Pending Verification</span>
                         </div>
                     </div>
 
-                    <div className={`${styles.statCard} ${styles.verified}`}>
+                    <div className={`${styles.statCard} ${styles.success}`}>
                         <div className={styles.statIcon}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -107,149 +126,119 @@ export default function AdminDashboard() {
                         </div>
                         <div className={styles.statInfo}>
                             <span className={styles.statValue}>{stats?.verifiedPharmacists || 0}</span>
-                            <span className={styles.statLabel}>Verified Pharmacists</span>
+                            <span className={styles.statLabel}>Verified</span>
                         </div>
                     </div>
 
                     <div className={styles.statCard}>
                         <div className={styles.statIcon}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
                             </svg>
                         </div>
                         <div className={styles.statInfo}>
-                            <span className={styles.statValue}>{stats?.totalOwners || 0}</span>
-                            <span className={styles.statLabel}>Pharmacy Owners</span>
+                            <span className={styles.statValue}>{stats?.openShifts || 0}</span>
+                            <span className={styles.statLabel}>Open Shifts</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Pharmacist Verification Section */}
+                {/* Pending Verifications */}
                 <section className={styles.section}>
                     <div className={styles.sectionHeader}>
-                        <h2 className={styles.sectionTitle}>Pharmacist Verification</h2>
-                        <div className={styles.filterTabs}>
-                            <button
-                                className={`${styles.filterTab} ${filter === 'all' ? styles.active : ''}`}
-                                onClick={() => setFilter('all')}
-                            >
-                                All ({pharmacists.length})
-                            </button>
-                            <button
-                                className={`${styles.filterTab} ${filter === 'pending' ? styles.active : ''}`}
-                                onClick={() => setFilter('pending')}
-                            >
-                                Pending ({pharmacists.filter(p => p.verificationStatus === 'pending').length})
-                            </button>
-                            <button
-                                className={`${styles.filterTab} ${filter === 'verified' ? styles.active : ''}`}
-                                onClick={() => setFilter('verified')}
-                            >
-                                Verified ({pharmacists.filter(p => p.verificationStatus === 'verified').length})
-                            </button>
-                        </div>
+                        <h2 className={styles.sectionTitle}>
+                            Pending Verifications
+                            {pendingPharmacists.length > 0 && (
+                                <span className={styles.badge}>{pendingPharmacists.length}</span>
+                            )}
+                        </h2>
                     </div>
 
-                    <div className={styles.tableContainer}>
-                        {filteredPharmacists.length === 0 ? (
-                            <div className={styles.emptyState}>
-                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                                </svg>
-                                <h3>No pharmacists found</h3>
-                                <p>No pharmacists match the selected filter</p>
-                            </div>
-                        ) : (
-                            <table className={styles.table}>
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>License #</th>
-                                        <th>Experience</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredPharmacists.map((pharmacist) => (
-                                        <tr key={pharmacist.id}>
-                                            <td>
-                                                <div className={styles.userCell}>
-                                                    <div className={styles.avatar}>
-                                                        {pharmacist.name.charAt(0)}
-                                                    </div>
-                                                    <div>
-                                                        <span className={styles.userName}>{pharmacist.name}</span>
-                                                        {pharmacist.specialties && (
-                                                            <span className={styles.specialties}>
-                                                                {pharmacist.specialties.join(', ')}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>{pharmacist.email}</td>
-                                            <td>
-                                                <code className={styles.licenseNumber}>{pharmacist.licenseNumber}</code>
-                                            </td>
-                                            <td>{pharmacist.yearsExperience} years</td>
-                                            <td>
-                                                <StatusBadge status={pharmacist.verificationStatus} />
-                                            </td>
-                                            <td>
-                                                <div className={styles.actions}>
-                                                    {pharmacist.verificationStatus === 'pending' && (
-                                                        <>
-                                                            <button
-                                                                className={`${styles.actionBtn} ${styles.verifyBtn}`}
-                                                                onClick={() => handleVerify(pharmacist.id)}
-                                                            >
-                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                                                </svg>
-                                                                Verify
-                                                            </button>
-                                                            <button
-                                                                className={`${styles.actionBtn} ${styles.rejectBtn}`}
-                                                                onClick={() => handleReject(pharmacist.id)}
-                                                            >
-                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                                                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                                                                </svg>
-                                                                Reject
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                    {pharmacist.verificationStatus === 'verified' && (
-                                                        <span className={styles.verifiedLabel}>
-                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                                            </svg>
-                                                            License Verified
-                                                        </span>
-                                                    )}
-                                                    {pharmacist.verificationStatus === 'rejected' && (
-                                                        <button
-                                                            className={`${styles.actionBtn} ${styles.verifyBtn}`}
-                                                            onClick={() => handleVerify(pharmacist.id)}
-                                                        >
-                                                            Re-verify
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        )}
+                    {pendingPharmacists.length === 0 ? (
+                        <div className={styles.emptyState}>
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            <p>All pharmacists are verified!</p>
+                        </div>
+                    ) : (
+                        <div className={styles.pharmacistList}>
+                            {pendingPharmacists.map((pharmacist) => (
+                                <div key={pharmacist.id} className={styles.pharmacistCard}>
+                                    <div className={styles.pharmacistInfo}>
+                                        <div className={styles.avatar}>
+                                            {pharmacist.name.charAt(0)}
+                                        </div>
+                                        <div className={styles.details}>
+                                            <h3>{pharmacist.name}</h3>
+                                            <p>{pharmacist.email}</p>
+                                            <div className={styles.meta}>
+                                                <span>License: {pharmacist.licenseNumber}</span>
+                                                <span>{pharmacist.yearsExperience} years exp.</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className={styles.actions}>
+                                        <button
+                                            className={`${styles.btn} ${styles.btnSuccess}`}
+                                            onClick={() => handleVerification(pharmacist.id, 'verified')}
+                                            disabled={updating === pharmacist.id}
+                                        >
+                                            {updating === pharmacist.id ? 'Verifying...' : 'Verify'}
+                                        </button>
+                                        <button
+                                            className={`${styles.btn} ${styles.btnDanger}`}
+                                            onClick={() => handleVerification(pharmacist.id, 'rejected')}
+                                            disabled={updating === pharmacist.id}
+                                        >
+                                            Reject
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
+
+                {/* Verified Pharmacists */}
+                <section className={styles.section}>
+                    <div className={styles.sectionHeader}>
+                        <h2 className={styles.sectionTitle}>Verified Pharmacists</h2>
                     </div>
+
+                    {verifiedPharmacists.length === 0 ? (
+                        <div className={styles.emptyState}>
+                            <p>No verified pharmacists yet</p>
+                        </div>
+                    ) : (
+                        <div className={styles.pharmacistList}>
+                            {verifiedPharmacists.map((pharmacist) => (
+                                <div key={pharmacist.id} className={styles.pharmacistCard}>
+                                    <div className={styles.pharmacistInfo}>
+                                        <div className={`${styles.avatar} ${styles.verified}`}>
+                                            {pharmacist.name.charAt(0)}
+                                        </div>
+                                        <div className={styles.details}>
+                                            <h3>{pharmacist.name}</h3>
+                                            <p>{pharmacist.email}</p>
+                                            <div className={styles.meta}>
+                                                <span>License: {pharmacist.licenseNumber}</span>
+                                                <span>{pharmacist.yearsExperience} years exp.</span>
+                                                {pharmacist.specialties?.map((s, i) => (
+                                                    <span key={i} className={styles.specialty}>{s}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <StatusBadge status="verified" />
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </section>
             </div>
         </div>

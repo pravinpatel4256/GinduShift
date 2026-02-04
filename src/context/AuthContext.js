@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getUserByEmail, getUserById } from '@/lib/dataStore';
 
 const AuthContext = createContext(null);
 
@@ -10,60 +9,81 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Check for saved session
-        const savedUserId = localStorage.getItem('locum_user_id');
-        if (savedUserId) {
-            const userData = getUserById(savedUserId);
-            if (userData) {
-                setUser(userData);
-            }
+        // Check for existing session
+        const savedUser = localStorage.getItem('locum_user');
+        if (savedUser) {
+            const parsedUser = JSON.parse(savedUser);
+            // Refresh user data from server
+            refreshUser(parsedUser.id);
+        } else {
+            setLoading(false);
         }
-        setLoading(false);
     }, []);
 
-    const login = (email, password) => {
-        const userData = getUserByEmail(email);
-        if (userData && userData.password === password) {
-            setUser(userData);
-            localStorage.setItem('locum_user_id', userData.id);
-            return { success: true, user: userData };
+    const refreshUser = async (userId) => {
+        try {
+            const response = await fetch(`/api/users/${userId}`);
+            if (response.ok) {
+                const userData = await response.json();
+                setUser(userData);
+                localStorage.setItem('locum_user', JSON.stringify(userData));
+            } else {
+                // User not found, clear session
+                localStorage.removeItem('locum_user');
+                setUser(null);
+            }
+        } catch (error) {
+            console.error('Error refreshing user:', error);
+        } finally {
+            setLoading(false);
         }
-        return { success: false, error: 'Invalid email or password' };
+    };
+
+    const login = async (email, password) => {
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                return { error: data.error || 'Login failed' };
+            }
+
+            setUser(data);
+            localStorage.setItem('locum_user', JSON.stringify(data));
+            return { success: true, user: data };
+        } catch (error) {
+            console.error('Login error:', error);
+            return { error: 'Connection error. Please try again.' };
+        }
     };
 
     const logout = () => {
         setUser(null);
-        localStorage.removeItem('locum_user_id');
+        localStorage.removeItem('locum_user');
     };
 
-    const refreshUser = () => {
-        if (user) {
-            const updatedUser = getUserById(user.id);
-            if (updatedUser) {
-                setUser(updatedUser);
-            }
-        }
-    };
-
-    const isVerified = () => {
-        if (user?.role !== 'pharmacist') return true;
-        return user?.verificationStatus === 'verified';
-    };
-
-    const value = {
-        user,
-        loading,
-        login,
-        logout,
-        refreshUser,
-        isVerified,
-        isAdmin: user?.role === 'admin',
-        isOwner: user?.role === 'owner',
-        isPharmacist: user?.role === 'pharmacist'
-    };
+    const isAdmin = user?.role === 'admin';
+    const isOwner = user?.role === 'owner';
+    const isPharmacist = user?.role === 'pharmacist';
+    const isVerified = () => user?.verificationStatus === 'verified';
 
     return (
-        <AuthContext.Provider value={value}>
+        <AuthContext.Provider value={{
+            user,
+            loading,
+            login,
+            logout,
+            refreshUser: () => user && refreshUser(user.id),
+            isAdmin,
+            isOwner,
+            isPharmacist,
+            isVerified
+        }}>
             {children}
         </AuthContext.Provider>
     );
