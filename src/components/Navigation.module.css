@@ -1,0 +1,139 @@
+.nav {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.95));
+    border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+    backdrop-filter: blur(20px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    color: #f1f5f9;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.logo svg {
+    color: #6366f1;
+}
+
+.logo span {
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.links {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.link:hover {
+    color: #f1f5f9;
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.link.active {
+    color: #a5b4fc;
+    background: rgba(99, 102, 241, 0.15);
+}
+
+.userSection {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.verificationBadge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 20px;
+    color: #f59e0b;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.userInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding-right: 1rem;
+    border-right: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.userName {
+    color: #f1f5f9;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.userRole {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+.logoutBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    color: #ef4444;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.logoutBtn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1rem;
+    }
+
+    .links {
+        display: none;
+    }
+
+    .userInfo {
+        display: none;
+    }
+}
