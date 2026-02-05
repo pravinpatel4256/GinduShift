@@ -26,7 +26,11 @@ export default function Home() {
                     break;
                 default:
                     console.warn('Unknown user role:', user.role);
-                // Optionally stay on home or redirect to a profile/setup page
+                    // If user has no role, redirect to register/role selection
+                    if (!user.role) {
+                        router.push('/register?google=true&email=' + encodeURIComponent(user.email || ''));
+                    }
+                // Otherwise stay on home
             }
         }
     }, [user, loading, router]);
@@ -72,9 +76,7 @@ export default function Home() {
                                 <polyline points="12 5 19 12 12 19"></polyline>
                             </svg>
                         </Link>
-                        <Link href="/login" className={styles.secondaryBtn}>
-                            View Demo Accounts
-                        </Link>
+                        {/* Demo account link removed */}
                     </div>
                 </div>
                 <div className={styles.heroVisual}>
