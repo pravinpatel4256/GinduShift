@@ -5,19 +5,22 @@ import { createClient } from '@libsql/client';
 const globalForPrisma = globalThis;
 
 function createPrismaClient() {
-    // Check if we're using Turso (libsql:// URL)
-    const dbUrl = process.env.DATABASE_URL || '';
-    
-    if (dbUrl.startsWith('libsql://') || dbUrl.startsWith('https://')) {
+    // Check if Turso credentials are available (production/cloud deployment)
+    const tursoUrl = process.env.TURSO_DATABASE_URL;
+    const tursoToken = process.env.TURSO_AUTH_TOKEN;
+
+    if (tursoUrl && tursoToken) {
         // Production: Use Turso with libsql adapter
+        console.log('[Prisma] Using Turso database:', tursoUrl);
         const libsql = createClient({
-            url: process.env.TURSO_DATABASE_URL,
-            authToken: process.env.TURSO_AUTH_TOKEN,
+            url: tursoUrl,
+            authToken: tursoToken,
         });
         const adapter = new PrismaLibSQL(libsql);
         return new PrismaClient({ adapter });
     } else {
         // Development: Use local SQLite
+        console.log('[Prisma] Using local SQLite database');
         return new PrismaClient();
     }
 }
