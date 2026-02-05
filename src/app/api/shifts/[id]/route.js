@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getShiftById, updateShiftStatus } from '@/lib/db';
+import { getShiftById, updateShiftStatus, approveShift, rejectShift } from '@/lib/db';
 
 export async function GET(request, { params }) {
     try {
@@ -26,11 +26,29 @@ export async function GET(request, { params }) {
 export async function PATCH(request, { params }) {
     try {
         const { id } = await params;
-        const { status } = await request.json();
+        const { status, action, adminNotes } = await request.json();
 
+        // Handle admin approval/rejection
+        if (action === 'approve') {
+            const shift = await approveShift(id, adminNotes);
+            return NextResponse.json(shift);
+        }
+
+        if (action === 'reject') {
+            if (!adminNotes) {
+                return NextResponse.json(
+                    { error: 'Admin notes required for rejection' },
+                    { status: 400 }
+                );
+            }
+            const shift = await rejectShift(id, adminNotes);
+            return NextResponse.json(shift);
+        }
+
+        // Handle regular status update
         if (!status) {
             return NextResponse.json(
-                { error: 'Status is required' },
+                { error: 'Status or action is required' },
                 { status: 400 }
             );
         }

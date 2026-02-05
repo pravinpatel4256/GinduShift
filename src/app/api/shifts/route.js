@@ -3,6 +3,7 @@ import {
     getAllShifts,
     getOpenShifts,
     getShiftsByOwner,
+    getPendingReviewShifts,
     createShift,
     searchShifts
 } from '@/lib/db';
@@ -32,6 +33,12 @@ export async function GET(request) {
         // If ownerId provided, get owner's shifts
         if (ownerId) {
             const shifts = await getShiftsByOwner(ownerId);
+            return NextResponse.json(shifts);
+        }
+
+        // If status is pending_review, get shifts needing admin approval
+        if (status === 'pending_review') {
+            const shifts = await getPendingReviewShifts();
             return NextResponse.json(shifts);
         }
 

@@ -11,8 +11,11 @@ export default function AdminDashboard() {
     const { user, loading, isAdmin } = useAuth();
     const router = useRouter();
     const [pharmacists, setPharmacists] = useState([]);
+    const [pendingShifts, setPendingShifts] = useState([]);
     const [stats, setStats] = useState(null);
     const [updating, setUpdating] = useState(null);
+    const [activeTab, setActiveTab] = useState('pharmacists');
+    const [rejectNotes, setRejectNotes] = useState({});
 
     useEffect(() => {
         if (!loading && !user) {
@@ -30,9 +33,10 @@ export default function AdminDashboard() {
 
     const loadData = async () => {
         try {
-            const [pharmacistsRes, statsRes] = await Promise.all([
+            const [pharmacistsRes, statsRes, shiftsRes] = await Promise.all([
                 fetch('/api/users?role=pharmacist'),
-                fetch('/api/users?stats=admin')
+                fetch('/api/users?stats=admin'),
+                fetch('/api/shifts?status=pending_review')
             ]);
 
             if (pharmacistsRes.ok) {
@@ -40,6 +44,9 @@ export default function AdminDashboard() {
             }
             if (statsRes.ok) {
                 setStats(await statsRes.json());
+            }
+            if (shiftsRes.ok) {
+                setPendingShifts(await shiftsRes.json());
             }
         } catch (error) {
             console.error('Error loading data:', error);
@@ -65,6 +72,34 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleShiftAction = async (shiftId, action) => {
+        if (action === 'reject' && !rejectNotes[shiftId]) {
+            alert('Please provide a reason for rejection');
+            return;
+        }
+
+        setUpdating(shiftId);
+        try {
+            const response = await fetch(`/api/shifts/${shiftId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action,
+                    adminNotes: rejectNotes[shiftId] || null
+                })
+            });
+
+            if (response.ok) {
+                await loadData();
+                setRejectNotes(prev => ({ ...prev, [shiftId]: '' }));
+            }
+        } catch (error) {
+            console.error('Error updating shift:', error);
+        } finally {
+            setUpdating(null);
+        }
+    };
+
     const pendingPharmacists = pharmacists.filter(p => p.verificationStatus === 'pending');
     const verifiedPharmacists = pharmacists.filter(p => p.verificationStatus === 'verified');
 
@@ -82,7 +117,7 @@ export default function AdminDashboard() {
                 <header className={styles.header}>
                     <div>
                         <h1 className={styles.title}>Admin Dashboard</h1>
-                        <p className={styles.subtitle}>Manage pharmacist verifications and platform oversight</p>
+                        <p className={styles.subtitle}>Manage pharmacist verifications and shift approvals</p>
                     </div>
                 </header>
 
@@ -117,20 +152,7 @@ export default function AdminDashboard() {
                         </div>
                     </div>
 
-                    <div className={`${styles.statCard} ${styles.success}`}>
-                        <div className={styles.statIcon}>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                            </svg>
-                        </div>
-                        <div className={styles.statInfo}>
-                            <span className={styles.statValue}>{stats?.verifiedPharmacists || 0}</span>
-                            <span className={styles.statLabel}>Verified</span>
-                        </div>
-                    </div>
-
-                    <div className={styles.statCard}>
+                    <div className={`${styles.statCard} ${styles.info}`}>
                         <div className={styles.statIcon}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -140,106 +162,243 @@ export default function AdminDashboard() {
                             </svg>
                         </div>
                         <div className={styles.statInfo}>
+                            <span className={styles.statValue}>{stats?.pendingReviewShifts || 0}</span>
+                            <span className={styles.statLabel}>Shifts To Review</span>
+                        </div>
+                    </div>
+
+                    <div className={`${styles.statCard} ${styles.success}`}>
+                        <div className={styles.statIcon}>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                        </div>
+                        <div className={styles.statInfo}>
                             <span className={styles.statValue}>{stats?.openShifts || 0}</span>
-                            <span className={styles.statLabel}>Open Shifts</span>
+                            <span className={styles.statLabel}>Active Shifts</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Pending Verifications */}
-                <section className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                        <h2 className={styles.sectionTitle}>
-                            Pending Verifications
-                            {pendingPharmacists.length > 0 && (
-                                <span className={styles.badge}>{pendingPharmacists.length}</span>
-                            )}
-                        </h2>
-                    </div>
+                {/* Tabs */}
+                <div className={styles.tabs}>
+                    <button
+                        className={`${styles.tab} ${activeTab === 'pharmacists' ? styles.tabActive : ''}`}
+                        onClick={() => setActiveTab('pharmacists')}
+                    >
+                        Pharmacist Verifications
+                        {pendingPharmacists.length > 0 && (
+                            <span className={styles.tabBadge}>{pendingPharmacists.length}</span>
+                        )}
+                    </button>
+                    <button
+                        className={`${styles.tab} ${activeTab === 'shifts' ? styles.tabActive : ''}`}
+                        onClick={() => setActiveTab('shifts')}
+                    >
+                        Shift Approvals
+                        {pendingShifts.length > 0 && (
+                            <span className={styles.tabBadge}>{pendingShifts.length}</span>
+                        )}
+                    </button>
+                </div>
 
-                    {pendingPharmacists.length === 0 ? (
-                        <div className={styles.emptyState}>
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                            </svg>
-                            <p>All pharmacists are verified!</p>
-                        </div>
-                    ) : (
-                        <div className={styles.pharmacistList}>
-                            {pendingPharmacists.map((pharmacist) => (
-                                <div key={pharmacist.id} className={styles.pharmacistCard}>
-                                    <div className={styles.pharmacistInfo}>
-                                        <div className={styles.avatar}>
-                                            {pharmacist.name.charAt(0)}
-                                        </div>
-                                        <div className={styles.details}>
-                                            <h3>{pharmacist.name}</h3>
-                                            <p>{pharmacist.email}</p>
-                                            <div className={styles.meta}>
-                                                <span>License: {pharmacist.licenseNumber}</span>
-                                                <span>{pharmacist.yearsExperience} years exp.</span>
+                {/* Pharmacist Verifications Tab */}
+                {activeTab === 'pharmacists' && (
+                    <>
+                        <section className={styles.section}>
+                            <div className={styles.sectionHeader}>
+                                <h2 className={styles.sectionTitle}>
+                                    Pending Verifications
+                                </h2>
+                            </div>
+
+                            {pendingPharmacists.length === 0 ? (
+                                <div className={styles.emptyState}>
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                    </svg>
+                                    <p>All pharmacists are verified!</p>
+                                </div>
+                            ) : (
+                                <div className={styles.pharmacistList}>
+                                    {pendingPharmacists.map((pharmacist) => (
+                                        <div key={pharmacist.id} className={styles.pharmacistCard}>
+                                            <div className={styles.pharmacistInfo}>
+                                                <div className={styles.avatar}>
+                                                    {pharmacist.name.charAt(0)}
+                                                </div>
+                                                <div className={styles.details}>
+                                                    <h3>{pharmacist.name}</h3>
+                                                    <p>{pharmacist.email}</p>
+                                                    <div className={styles.meta}>
+                                                        <span>License: {pharmacist.licenseNumber}</span>
+                                                        <span>{pharmacist.yearsExperience} years exp.</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className={styles.actions}>
+                                                <button
+                                                    className={`${styles.btn} ${styles.btnSuccess}`}
+                                                    onClick={() => handleVerification(pharmacist.id, 'verified')}
+                                                    disabled={updating === pharmacist.id}
+                                                >
+                                                    {updating === pharmacist.id ? 'Verifying...' : 'Verify'}
+                                                </button>
+                                                <button
+                                                    className={`${styles.btn} ${styles.btnDanger}`}
+                                                    onClick={() => handleVerification(pharmacist.id, 'rejected')}
+                                                    disabled={updating === pharmacist.id}
+                                                >
+                                                    Reject
+                                                </button>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className={styles.actions}>
-                                        <button
-                                            className={`${styles.btn} ${styles.btnSuccess}`}
-                                            onClick={() => handleVerification(pharmacist.id, 'verified')}
-                                            disabled={updating === pharmacist.id}
-                                        >
-                                            {updating === pharmacist.id ? 'Verifying...' : 'Verify'}
-                                        </button>
-                                        <button
-                                            className={`${styles.btn} ${styles.btnDanger}`}
-                                            onClick={() => handleVerification(pharmacist.id, 'rejected')}
-                                            disabled={updating === pharmacist.id}
-                                        >
-                                            Reject
-                                        </button>
-                                    </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    )}
-                </section>
+                            )}
+                        </section>
 
-                {/* Verified Pharmacists */}
-                <section className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                        <h2 className={styles.sectionTitle}>Verified Pharmacists</h2>
-                    </div>
+                        <section className={styles.section}>
+                            <div className={styles.sectionHeader}>
+                                <h2 className={styles.sectionTitle}>Verified Pharmacists</h2>
+                            </div>
 
-                    {verifiedPharmacists.length === 0 ? (
-                        <div className={styles.emptyState}>
-                            <p>No verified pharmacists yet</p>
-                        </div>
-                    ) : (
-                        <div className={styles.pharmacistList}>
-                            {verifiedPharmacists.map((pharmacist) => (
-                                <div key={pharmacist.id} className={styles.pharmacistCard}>
-                                    <div className={styles.pharmacistInfo}>
-                                        <div className={`${styles.avatar} ${styles.verified}`}>
-                                            {pharmacist.name.charAt(0)}
+                            {verifiedPharmacists.length === 0 ? (
+                                <div className={styles.emptyState}>
+                                    <p>No verified pharmacists yet</p>
+                                </div>
+                            ) : (
+                                <div className={styles.pharmacistList}>
+                                    {verifiedPharmacists.map((pharmacist) => (
+                                        <div key={pharmacist.id} className={styles.pharmacistCard}>
+                                            <div className={styles.pharmacistInfo}>
+                                                <div className={`${styles.avatar} ${styles.verified}`}>
+                                                    {pharmacist.name.charAt(0)}
+                                                </div>
+                                                <div className={styles.details}>
+                                                    <h3>{pharmacist.name}</h3>
+                                                    <p>{pharmacist.email}</p>
+                                                    <div className={styles.meta}>
+                                                        <span>License: {pharmacist.licenseNumber}</span>
+                                                        <span>{pharmacist.yearsExperience} years exp.</span>
+                                                        {pharmacist.specialties?.map((s, i) => (
+                                                            <span key={i} className={styles.specialty}>{s}</span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <StatusBadge status="verified" />
                                         </div>
-                                        <div className={styles.details}>
-                                            <h3>{pharmacist.name}</h3>
-                                            <p>{pharmacist.email}</p>
-                                            <div className={styles.meta}>
-                                                <span>License: {pharmacist.licenseNumber}</span>
-                                                <span>{pharmacist.yearsExperience} years exp.</span>
-                                                {pharmacist.specialties?.map((s, i) => (
-                                                    <span key={i} className={styles.specialty}>{s}</span>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+                    </>
+                )}
+
+                {/* Shift Approvals Tab */}
+                {activeTab === 'shifts' && (
+                    <section className={styles.section}>
+                        <div className={styles.sectionHeader}>
+                            <h2 className={styles.sectionTitle}>
+                                Shifts Pending Review
+                            </h2>
+                        </div>
+
+                        {pendingShifts.length === 0 ? (
+                            <div className={styles.emptyState}>
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg>
+                                <p>All shifts have been reviewed!</p>
+                            </div>
+                        ) : (
+                            <div className={styles.shiftsList}>
+                                {pendingShifts.map((shift) => (
+                                    <div key={shift.id} className={styles.shiftCard}>
+                                        <div className={styles.shiftHeader}>
+                                            <div>
+                                                <h3>{shift.pharmacyName}</h3>
+                                                <p className={styles.shiftLocation}>
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                                        <circle cx="12" cy="10" r="3"></circle>
+                                                    </svg>
+                                                    {shift.location}
+                                                </p>
+                                            </div>
+                                            <StatusBadge status="pending" />
+                                        </div>
+
+                                        <div className={styles.shiftDetails}>
+                                            <div className={styles.shiftDetail}>
+                                                <span className={styles.shiftLabel}>Date</span>
+                                                <span>{shift.startDate} to {shift.endDate}</span>
+                                            </div>
+                                            <div className={styles.shiftDetail}>
+                                                <span className={styles.shiftLabel}>Time</span>
+                                                <span>{shift.startTime} - {shift.endTime}</span>
+                                            </div>
+                                            <div className={styles.shiftDetail}>
+                                                <span className={styles.shiftLabel}>Rate</span>
+                                                <span>${shift.hourlyRate}/hr</span>
+                                            </div>
+                                            <div className={styles.shiftDetail}>
+                                                <span className={styles.shiftLabel}>Total Hours</span>
+                                                <span>{shift.totalHours} hrs</span>
+                                            </div>
+                                        </div>
+
+                                        {shift.description && (
+                                            <p className={styles.shiftDescription}>{shift.description}</p>
+                                        )}
+
+                                        {shift.requirements?.length > 0 && (
+                                            <div className={styles.shiftRequirements}>
+                                                {shift.requirements.map((req, i) => (
+                                                    <span key={i} className={styles.requirement}>{req}</span>
                                                 ))}
                                             </div>
+                                        )}
+
+                                        <div className={styles.shiftOwner}>
+                                            Posted by: <strong>{shift.owner?.name || 'Unknown'}</strong>
+                                        </div>
+
+                                        <div className={styles.shiftActions}>
+                                            <button
+                                                className={`${styles.btn} ${styles.btnSuccess}`}
+                                                onClick={() => handleShiftAction(shift.id, 'approve')}
+                                                disabled={updating === shift.id}
+                                            >
+                                                {updating === shift.id ? 'Processing...' : '✓ Approve'}
+                                            </button>
+                                            <div className={styles.rejectSection}>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Rejection reason..."
+                                                    value={rejectNotes[shift.id] || ''}
+                                                    onChange={(e) => setRejectNotes(prev => ({ ...prev, [shift.id]: e.target.value }))}
+                                                    className={styles.rejectInput}
+                                                />
+                                                <button
+                                                    className={`${styles.btn} ${styles.btnDanger}`}
+                                                    onClick={() => handleShiftAction(shift.id, 'reject')}
+                                                    disabled={updating === shift.id}
+                                                >
+                                                    ✕ Reject
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    <StatusBadge status="verified" />
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </section>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                )}
             </div>
         </div>
     );

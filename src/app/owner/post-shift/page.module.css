@@ -294,6 +294,25 @@
     color: #6366f1;
 }
 
+.approvalNote {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(16, 185, 129, 0.05);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 10px;
+    font-size: 0.8rem;
+    color: #10b981;
+    line-height: 1.5;
+}
+
+.approvalNote svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
     .formContainer {

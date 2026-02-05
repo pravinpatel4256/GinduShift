@@ -1,0 +1,102 @@
+import NextAuth from 'next-auth';
+import GoogleProvider from 'next-auth/providers/google';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import { getUserByEmail, getUserByGoogleId, findOrCreateOAuthUser } from '@/lib/db';
+
+export const authOptions = {
+    providers: [
+        GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID || '',
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+        }),
+        CredentialsProvider({
+            name: 'Credentials',
+            credentials: {
+                email: { label: 'Email', type: 'email' },
+                password: { label: 'Password', type: 'password' }
+            },
+            async authorize(credentials) {
+                if (!credentials?.email || !credentials?.password) {
+                    return null;
+                }
+
+                const user = await getUserByEmail(credentials.email);
+
+                if (!user) {
+                    return null;
+                }
+
+                // Simple password check (in production, use hashed passwords)
+                if (user.password !== credentials.password) {
+                    return null;
+                }
+
+                return {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role,
+                    image: user.image,
+                    verificationStatus: user.verificationStatus
+                };
+            }
+        })
+    ],
+    callbacks: {
+        async signIn({ user, account, profile }) {
+            // For Google sign-in, we need to check if user exists
+            if (account?.provider === 'google' && profile) {
+                const existingUser = await getUserByGoogleId(profile.sub);
+                if (!existingUser) {
+                    // Check by email
+                    const emailUser = await getUserByEmail(profile.email);
+                    if (!emailUser) {
+                        // New user - needs to select role
+                        // Store profile in session for role selection
+                        return `/register?google=true&email=${encodeURIComponent(profile.email)}&name=${encodeURIComponent(profile.name)}&googleId=${profile.sub}&image=${encodeURIComponent(profile.picture || '')}`;
+                    }
+                }
+            }
+            return true;
+        },
+        async jwt({ token, user, account, profile }) {
+            if (user) {
+                token.id = user.id;
+                token.role = user.role;
+                token.verificationStatus = user.verificationStatus;
+            }
+
+            // For Google sign-in, fetch full user data
+            if (account?.provider === 'google' && profile?.sub) {
+                const dbUser = await getUserByGoogleId(profile.sub);
+                if (dbUser) {
+                    token.id = dbUser.id;
+                    token.role = dbUser.role;
+                    token.verificationStatus = dbUser.verificationStatus;
+                }
+            }
+
+            return token;
+        },
+        async session({ session, token }) {
+            if (token) {
+                session.user.id = token.id;
+                session.user.role = token.role;
+                session.user.verificationStatus = token.verificationStatus;
+            }
+            return session;
+        }
+    },
+    pages: {
+        signIn: '/login',
+        error: '/login'
+    },
+    session: {
+        strategy: 'jwt'
+    },
+    secret: process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production'
+};
+
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };

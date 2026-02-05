@@ -39,6 +39,13 @@ export const getUserByEmail = async (email) => {
     return user ? parseUser(user) : null;
 };
 
+export const getUserByGoogleId = async (googleId) => {
+    const user = await prisma.user.findUnique({
+        where: { googleId }
+    });
+    return user ? parseUser(user) : null;
+};
+
 export const getPharmacists = async () => {
     const users = await prisma.user.findMany({
         where: { role: 'pharmacist' },
@@ -67,9 +74,11 @@ export const createUser = async (userData) => {
     const user = await prisma.user.create({
         data: {
             email: userData.email,
-            password: userData.password,
+            password: userData.password || null,
             name: userData.name,
             role: userData.role,
+            googleId: userData.googleId || null,
+            image: userData.image || null,
             pharmacyName: userData.pharmacyName,
             address: userData.address,
             phone: userData.phone,
@@ -80,6 +89,52 @@ export const createUser = async (userData) => {
             bio: userData.bio
         }
     });
+    return parseUser(user);
+};
+
+export const findOrCreateOAuthUser = async (profile, role = null) => {
+    // Check if user exists by Google ID
+    let user = await prisma.user.findUnique({
+        where: { googleId: profile.sub || profile.id }
+    });
+
+    if (user) {
+        return parseUser(user);
+    }
+
+    // Check if user exists by email
+    user = await prisma.user.findUnique({
+        where: { email: profile.email }
+    });
+
+    if (user) {
+        // Link Google account to existing user
+        user = await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                googleId: profile.sub || profile.id,
+                image: profile.picture || profile.image
+            }
+        });
+        return parseUser(user);
+    }
+
+    // Create new user - role must be provided for new users
+    if (!role) {
+        return { needsRole: true, profile };
+    }
+
+    user = await prisma.user.create({
+        data: {
+            email: profile.email,
+            name: profile.name,
+            googleId: profile.sub || profile.id,
+            image: profile.picture || profile.image,
+            role: role,
+            verificationStatus: role === 'pharmacist' ? 'pending' : null
+        }
+    });
+
     return parseUser(user);
 };
 
@@ -99,6 +154,17 @@ export const getAllShifts = async () => {
     return shifts.map(parseShift);
 };
 
+// Get shifts pending admin review
+export const getPendingReviewShifts = async () => {
+    const shifts = await prisma.shift.findMany({
+        where: { status: 'pending_review' },
+        orderBy: { createdAt: 'desc' },
+        include: { owner: true }
+    });
+    return shifts.map(parseShift);
+};
+
+// Get open shifts (approved by admin, visible to pharmacists)
 export const getOpenShifts = async () => {
     const shifts = await prisma.shift.findMany({
         where: { status: 'open' },
@@ -141,20 +207,33 @@ export const createShift = async (shiftData) => {
             totalHours: shiftData.totalHours,
             description: shiftData.description,
             requirements: shiftData.requirements ? JSON.stringify(shiftData.requirements) : null,
-            status: 'open'
+            status: 'pending_review' // New shifts require admin approval
         },
         include: { owner: true }
     });
     return parseShift(shift);
 };
 
-export const updateShiftStatus = async (shiftId, status) => {
+export const updateShiftStatus = async (shiftId, status, adminNotes = null) => {
     const shift = await prisma.shift.update({
         where: { id: shiftId },
-        data: { status },
+        data: {
+            status,
+            adminNotes: adminNotes || undefined
+        },
         include: { owner: true }
     });
     return parseShift(shift);
+};
+
+// Admin approves a shift for pharmacist viewing
+export const approveShift = async (shiftId, adminNotes = null) => {
+    return updateShiftStatus(shiftId, 'open', adminNotes);
+};
+
+// Admin rejects a shift
+export const rejectShift = async (shiftId, adminNotes) => {
+    return updateShiftStatus(shiftId, 'rejected', adminNotes);
 };
 
 // Parse shift from database format to app format
@@ -298,7 +377,7 @@ const parseApplication = (app) => ({
 
 export const searchShifts = async (filters = {}) => {
     const where = {
-        status: 'open'
+        status: 'open' // Only show approved shifts to pharmacists
     };
 
     // Filter by minimum rate
@@ -359,14 +438,16 @@ export const getAdminStats = async () => {
         verifiedPharmacists,
         totalOwners,
         totalShifts,
-        openShifts
+        openShifts,
+        pendingReviewShifts
     ] = await Promise.all([
         prisma.user.count({ where: { role: 'pharmacist' } }),
         prisma.user.count({ where: { role: 'pharmacist', verificationStatus: 'pending' } }),
         prisma.user.count({ where: { role: 'pharmacist', verificationStatus: 'verified' } }),
         prisma.user.count({ where: { role: 'owner' } }),
         prisma.shift.count(),
-        prisma.shift.count({ where: { status: 'open' } })
+        prisma.shift.count({ where: { status: 'open' } }),
+        prisma.shift.count({ where: { status: 'pending_review' } })
     ]);
 
     return {
@@ -375,7 +456,8 @@ export const getAdminStats = async () => {
         verifiedPharmacists,
         totalOwners,
         totalShifts,
-        openShifts
+        openShifts,
+        pendingReviewShifts
     };
 };
 
@@ -468,7 +550,7 @@ export const seedDatabase = async () => {
         }
     });
 
-    // Create Shifts
+    // Create Shifts - some pending review, some approved
     const shift1 = await prisma.shift.create({
         data: {
             ownerId: owner1.id,
@@ -483,7 +565,7 @@ export const seedDatabase = async () => {
             totalHours: 8,
             description: 'Regular retail shift. Must be comfortable with high-volume dispensing.',
             requirements: JSON.stringify(['Retail experience', 'State license']),
-            status: 'open'
+            status: 'open' // Already approved
         }
     });
 
@@ -501,7 +583,7 @@ export const seedDatabase = async () => {
             totalHours: 24,
             description: 'Weekend coverage needed. Three consecutive days.',
             requirements: JSON.stringify(['Weekend availability', 'State license']),
-            status: 'open'
+            status: 'pending_review' // Needs admin approval
         }
     });
 
@@ -519,7 +601,7 @@ export const seedDatabase = async () => {
             totalHours: 8,
             description: 'Overnight shift at 24-hour pharmacy. Quiet but requires independence.',
             requirements: JSON.stringify(['Night shift experience', 'State license']),
-            status: 'open'
+            status: 'open' // Already approved
         }
     });
 
@@ -537,7 +619,7 @@ export const seedDatabase = async () => {
             totalHours: 72,
             description: 'Extended coverage for vacation relief. Monday through Friday for 9 days.',
             requirements: JSON.stringify(['Retail experience', 'State license', 'Immunization certified']),
-            status: 'open'
+            status: 'pending_review' // Needs admin approval
         }
     });
 

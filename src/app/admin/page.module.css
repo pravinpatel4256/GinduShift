@@ -54,14 +54,19 @@
     backdrop-filter: blur(10px);
 }
 
-.statCard.pending {
+.statCard.warning {
     border-color: rgba(245, 158, 11, 0.3);
     background: linear-gradient(145deg, rgba(245, 158, 11, 0.1), rgba(15, 23, 42, 0.9));
 }
 
-.statCard.verified {
+.statCard.success {
     border-color: rgba(16, 185, 129, 0.3);
     background: linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(15, 23, 42, 0.9));
+}
+
+.statCard.info {
+    border-color: rgba(59, 130, 246, 0.3);
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.1), rgba(15, 23, 42, 0.9));
 }
 
 .statIcon {
@@ -75,14 +80,19 @@
     color: #6366f1;
 }
 
-.statCard.pending .statIcon {
+.statCard.warning .statIcon {
     background: rgba(245, 158, 11, 0.1);
     color: #f59e0b;
 }
 
-.statCard.verified .statIcon {
+.statCard.success .statIcon {
     background: rgba(16, 185, 129, 0.1);
     color: #10b981;
+}
+
+.statCard.info .statIcon {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
 }
 
 .statInfo {
@@ -101,6 +111,55 @@
     color: #94a3b8;
 }
 
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+    padding-bottom: 0.5rem;
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: transparent;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    color: #94a3b8;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab:hover {
+    color: #f1f5f9;
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.tabActive {
+    color: #a5b4fc;
+    background: rgba(99, 102, 241, 0.15);
+    border-bottom: 2px solid #6366f1;
+}
+
+.tabBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: #ef4444;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+}
+
 /* Section */
 .section {
     background: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
@@ -108,6 +167,7 @@
     border-radius: 20px;
     padding: 1.5rem;
     backdrop-filter: blur(10px);
+    margin-bottom: 2rem;
 }
 
 .sectionHeader {
@@ -125,150 +185,234 @@
     color: #f1f5f9;
 }
 
-.filterTabs {
+/* Pharmacist List */
+.pharmacistList {
     display: flex;
-    gap: 0.5rem;
+    flex-direction: column;
+    gap: 1rem;
 }
 
-.filterTab {
-    padding: 0.5rem 1rem;
-    background: transparent;
-    border: 1px solid rgba(99, 102, 241, 0.2);
-    border-radius: 8px;
-    color: #94a3b8;
-    font-size: 0.85rem;
-    cursor: pointer;
+.pharmacistCard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    border-radius: 12px;
     transition: all 0.2s ease;
 }
 
-.filterTab:hover {
-    border-color: rgba(99, 102, 241, 0.4);
-    color: #f1f5f9;
-}
-
-.filterTab.active {
-    background: rgba(99, 102, 241, 0.2);
-    border-color: rgba(99, 102, 241, 0.5);
-    color: #a5b4fc;
-}
-
-/* Table */
-.tableContainer {
-    overflow-x: auto;
-}
-
-.table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.table th,
-.table td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid rgba(99, 102, 241, 0.1);
-}
-
-.table th {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #64748b;
-}
-
-.table td {
-    font-size: 0.9rem;
-    color: #e2e8f0;
-}
-
-.table tbody tr:hover {
+.pharmacistCard:hover {
     background: rgba(99, 102, 241, 0.05);
 }
 
-.userCell {
+.pharmacistInfo {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 1rem;
 }
 
 .avatar {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    border-radius: 10px;
-    font-size: 1rem;
+    border-radius: 12px;
+    font-size: 1.25rem;
     font-weight: 600;
     color: white;
 }
 
-.userName {
-    display: block;
-    font-weight: 500;
+.avatar.verified {
+    background: linear-gradient(135deg, #10b981, #34d399);
 }
 
-.specialties {
-    display: block;
-    font-size: 0.75rem;
+.details h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 0.25rem;
+}
+
+.details p {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+}
+
+.meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
     color: #64748b;
 }
 
-.licenseNumber {
-    padding: 0.25rem 0.5rem;
+.specialty {
+    padding: 0.15rem 0.5rem;
     background: rgba(99, 102, 241, 0.1);
     border-radius: 4px;
-    font-size: 0.8rem;
     color: #a5b4fc;
 }
 
-/* Actions */
 .actions {
     display: flex;
     gap: 0.5rem;
 }
 
-.actionBtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.5rem 0.85rem;
+.btn {
+    padding: 0.5rem 1rem;
     border-radius: 8px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 500;
     border: none;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.verifyBtn {
+.btnSuccess {
     background: rgba(16, 185, 129, 0.1);
     border: 1px solid rgba(16, 185, 129, 0.3);
     color: #10b981;
 }
 
-.verifyBtn:hover {
+.btnSuccess:hover:not(:disabled) {
     background: rgba(16, 185, 129, 0.2);
 }
 
-.rejectBtn {
+.btnDanger {
     background: rgba(239, 68, 68, 0.1);
     border: 1px solid rgba(239, 68, 68, 0.3);
     color: #ef4444;
 }
 
-.rejectBtn:hover {
+.btnDanger:hover:not(:disabled) {
     background: rgba(239, 68, 68, 0.2);
 }
 
-.verifiedLabel {
-    display: inline-flex;
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Shifts List */
+.shiftsList {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.shiftCard {
+    padding: 1.5rem;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    border-radius: 12px;
+}
+
+.shiftHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.shiftHeader h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 0.25rem;
+}
+
+.shiftLocation {
+    display: flex;
     align-items: center;
     gap: 0.35rem;
-    color: #10b981;
     font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.shiftDetails {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: rgba(99, 102, 241, 0.05);
+    border-radius: 8px;
+}
+
+.shiftDetail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.shiftLabel {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.shiftDescription {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.shiftRequirements {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.requirement {
+    padding: 0.25rem 0.75rem;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #a5b4fc;
+}
+
+.shiftOwner {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-bottom: 1rem;
+}
+
+.shiftActions {
+    display: flex;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.rejectSection {
+    display: flex;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.rejectInput {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    color: #f1f5f9;
+    font-size: 0.85rem;
+}
+
+.rejectInput::placeholder {
+    color: #64748b;
+}
+
+.rejectInput:focus {
+    outline: none;
+    border-color: rgba(239, 68, 68, 0.5);
 }
 
 /* Empty State */
@@ -294,6 +438,10 @@
     .statsGrid {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    .shiftDetails {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 @media (max-width: 768px) {
@@ -301,15 +449,30 @@
         grid-template-columns: 1fr;
     }
 
-    .sectionHeader {
+    .pharmacistCard {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
     }
 
-    .filterTabs {
+    .actions {
         width: 100%;
-        overflow-x: auto;
+    }
+
+    .btn {
+        flex: 1;
+    }
+
+    .shiftDetails {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .shiftActions {
+        flex-direction: column;
+    }
+
+    .rejectSection {
+        flex-direction: column;
     }
 
     .container {
