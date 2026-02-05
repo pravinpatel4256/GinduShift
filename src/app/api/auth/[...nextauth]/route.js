@@ -115,7 +115,8 @@ export const authOptions = {
     session: {
         strategy: 'jwt'
     },
-    secret: process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production'
+    secret: process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production',
+    trustHost: true,
 };
 
 const handler = NextAuth(authOptions);
