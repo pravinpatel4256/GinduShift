@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
@@ -39,7 +39,7 @@ const demoAccounts = [
     }
 ];
 
-export default function LoginPage() {
+function LoginContent() {
     const { login } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -241,5 +241,13 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className={styles.loadingContainer}><div className={styles.spinner}></div></div>}>
+            <LoginContent />
+        </Suspense>
     );
 }
