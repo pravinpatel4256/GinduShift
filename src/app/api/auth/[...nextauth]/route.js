@@ -75,19 +75,25 @@ export const authOptions = {
             return true;
         },
         async jwt({ token, user, account, profile }) {
-            if (user) {
+            // Initial sign in from provider
+            if (account && user) {
+                token.accessToken = account.access_token;
                 token.id = user.id;
-                token.role = user.role;
-                token.verificationStatus = user.verificationStatus;
             }
 
-            // For Google sign-in, fetch full user data
-            if (account?.provider === 'google' && profile?.sub) {
-                const dbUser = await getUserByGoogleId(profile.sub);
-                if (dbUser) {
-                    token.id = dbUser.id;
-                    token.role = dbUser.role;
-                    token.verificationStatus = dbUser.verificationStatus;
+            // Always sync with database to ensure role/status is up to date
+            // This fixes issues where Google login doesn't immediately have role in session
+            if (token.email) {
+                try {
+                    const dbUser = await getUserByEmail(token.email);
+                    if (dbUser) {
+                        token.id = dbUser.id;
+                        token.role = dbUser.role;
+                        token.verificationStatus = dbUser.verificationStatus;
+                        // console.log(`[NextAuth] synced role for ${token.email}: ${token.role}`);
+                    }
+                } catch (error) {
+                    console.error('[NextAuth] Error syncing user in JWT:', error);
                 }
             }
 

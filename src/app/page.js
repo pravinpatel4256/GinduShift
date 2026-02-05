@@ -12,6 +12,7 @@ export default function Home() {
 
     useEffect(() => {
         if (!loading && user) {
+            console.log('Redirecting based on role:', user.role);
             // Redirect logged-in users to their dashboard
             switch (user.role) {
                 case 'admin':
@@ -23,6 +24,9 @@ export default function Home() {
                 case 'pharmacist':
                     router.push('/pharmacist');
                     break;
+                default:
+                    console.warn('Unknown user role:', user.role);
+                // Optionally stay on home or redirect to a profile/setup page
             }
         }
     }, [user, loading, router]);
