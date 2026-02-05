@@ -44,17 +44,32 @@ export const authOptions = {
     ],
     callbacks: {
         async signIn({ user, account, profile }) {
+            console.log(`[NextAuth] SignIn callback for provider: ${account?.provider}, email: ${profile?.email}`);
+
             // For Google sign-in, we need to check if user exists
             if (account?.provider === 'google' && profile) {
-                const existingUser = await getUserByGoogleId(profile.sub);
-                if (!existingUser) {
-                    // Check by email
-                    const emailUser = await getUserByEmail(profile.email);
-                    if (!emailUser) {
-                        // New user - needs to select role
-                        // Store profile in session for role selection
-                        return `/register?google=true&email=${encodeURIComponent(profile.email)}&name=${encodeURIComponent(profile.name)}&googleId=${profile.sub}&image=${encodeURIComponent(profile.picture || '')}`;
+                try {
+                    console.log(`[NextAuth] Checking for existing user with Google ID: ${profile.sub}`);
+                    const existingUser = await getUserByGoogleId(profile.sub);
+
+                    if (!existingUser) {
+                        // Check by email
+                        console.log(`[NextAuth] User not found by Google ID. Checking email: ${profile.email}`);
+                        const emailUser = await getUserByEmail(profile.email);
+
+                        if (!emailUser) {
+                            console.log(`[NextAuth] User not found. Redirecting to registration.`);
+                            // New user - needs to select role
+                            // Store profile in session for role selection
+                            return `/register?google=true&email=${encodeURIComponent(profile.email)}&name=${encodeURIComponent(profile.name)}&googleId=${profile.sub}&image=${encodeURIComponent(profile.picture || '')}`;
+                        }
                     }
+                    console.log(`[NextAuth] User found. allowing sign in.`);
+                } catch (error) {
+                    console.error('[NextAuth] SignIn Database Error:', error);
+                    // Return false to deny sign in or a specific error redirect
+                    // Using a simple error query param to avoid header overflow
+                    return '/login?error=DatabaseError';
                 }
             }
             return true;

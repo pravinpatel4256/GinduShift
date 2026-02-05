@@ -89,7 +89,7 @@ function LoginContent() {
     const handleGoogleSignIn = async () => {
         setIsGoogleLoading(true);
         try {
-            await signIn('google', { callbackUrl: '/auth/callback' });
+            await signIn('google', { callbackUrl: '/' });
         } catch (err) {
             console.error('Google sign-in error:', err);
             setError('Failed to sign in with Google');
