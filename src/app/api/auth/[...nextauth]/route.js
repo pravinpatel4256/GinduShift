@@ -77,7 +77,7 @@ export const authOptions = {
         async jwt({ token, user, account, profile }) {
             // Initial sign in from provider
             if (account && user) {
-                token.accessToken = account.access_token;
+                // token.accessToken = account.access_token; // Removed to prevent cookie size issues
                 token.id = user.id;
             }
 
