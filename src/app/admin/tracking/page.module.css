@@ -315,6 +315,55 @@
     padding: 4rem;
 }
 
+
+.cardActions {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.reminderBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.reminderBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3);
+}
+
+.reminderBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #9ca3af;
+}
+
+/* Spinner for button */
+.spinner-sm {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
     .cardBody {

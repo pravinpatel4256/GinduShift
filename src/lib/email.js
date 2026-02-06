@@ -174,3 +174,51 @@ export const sendAdminNotificationEmail = async (shift, pharmacist, adminEmail) 
         return { success: false, error: error.message };
     }
 };
+
+// Send shift reminder email
+export const sendShiftReminderEmail = async (shift, pharmacist) => {
+    const transporter = createTransporter();
+
+    if (!transporter) {
+        console.log('📧 Reminder email would be sent (SMTP not configured):');
+        console.log(`   To: ${pharmacist.email}`);
+        console.log(`   Subject: Reminder: Shift Tomorrow - ${shift.pharmacyName}`);
+        return { success: true, mock: true };
+    }
+
+    const mailOptions = {
+        from: process.env.SMTP_FROM || '"GinduApp" <noreply@ginduapp.com>',
+        to: pharmacist.email,
+        subject: `🔔 Reminder: Upcoming Shift at ${shift.pharmacyName}`,
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #f59e0b, #d97706); padding: 20px; border-radius: 12px 12px 0 0;">
+                    <h1 style="color: white; margin: 0;">Shift Reminder 🔔</h1>
+                </div>
+                <div style="background: #f8fafc; padding: 24px; border-radius: 0 0 12px 12px;">
+                    <p>Hi ${pharmacist.name},</p>
+                    <p>This is a reminder for your upcoming shift tomorrow:</p>
+                    
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                        <h2 style="color: #f59e0b; margin-top: 0;">${shift.pharmacyName}</h2>
+                        <p><strong>📍 Location:</strong> ${shift.location}</p>
+                        <p><strong>📅 Date:</strong> ${shift.startDate}</p>
+                        <p><strong>⏰ Time:</strong> ${shift.startTime} - ${shift.endTime}</p>
+                    </div>
+                    
+                    <p>Please ensure you arrive on time. If you have any issues, please contact the pharmacy immediately.</p>
+                    
+                    <p>Best regards,<br>The GinduApp Team</p>
+                </div>
+            </div>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        return { success: true };
+    } catch (error) {
+        console.error('Error sending reminder email:', error);
+        return { success: false, error: error.message };
+    }
+};
