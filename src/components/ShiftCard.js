@@ -92,14 +92,6 @@ export default function ShiftCard({
                 {viewMode === 'owner' && (
                     <div className={styles.ownerRateDisplay}>
                         <div className={styles.rateBreakdown}>
-                            <div className={styles.breakdownRow}>
-                                <span>Pharmacist Rate:</span>
-                                <span>${shift.hourlyRate}/hr</span>
-                            </div>
-                            <div className={styles.breakdownRow}>
-                                <span>Platform Fee:</span>
-                                <span>${platformFee.toFixed(2)}/hr</span>
-                            </div>
                             <div className={`${styles.breakdownRow} ${styles.totalRow}`}>
                                 <span>Your Cost:</span>
                                 <span>${ownerCost.toFixed(2)}/hr</span>

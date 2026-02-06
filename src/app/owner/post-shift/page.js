@@ -311,7 +311,7 @@ export default function PostShiftPage() {
                                         required
                                     />
                                     <span className={styles.inputHint}>
-                                        Total rate (Pharmacist receives this minus $20/hr fee)
+                                        Total rate you will pay per hour
                                     </span>
                                 </div>
                             </div>
@@ -454,17 +454,9 @@ export default function PostShiftPage() {
                             <h3 className={styles.summaryTitle}>Cost Summary</h3>
 
                             <div className={styles.summaryDetails}>
-                                <div className={styles.summaryRow}>
+                                <div className={`${styles.summaryRow} ${styles.highlight}`}>
                                     <span>Your Offer Rate</span>
                                     <span>${ownerRate.toFixed(2)}/hr</span>
-                                </div>
-                                <div className={styles.summaryRow}>
-                                    <span>Platform Fee</span>
-                                    <span>$20.00/hr</span>
-                                </div>
-                                <div className={`${styles.summaryRow} ${styles.highlight}`}>
-                                    <span>Pharmacist Receives</span>
-                                    <span>${pharmacistRate.toFixed(2)}/hr</span>
                                 </div>
                             </div>
 
@@ -480,32 +472,13 @@ export default function PostShiftPage() {
                             <div className={styles.divider}></div>
 
                             <div className={styles.totalSection}>
-                                <div className={styles.totalRow}>
-                                    <span>Pharmacist Earnings</span>
-                                    <span className={styles.pharmacistTotal}>
-                                        ${totalPharmacistEarnings.toLocaleString()}
-                                    </span>
-                                </div>
-                                <div className={styles.totalRow}>
-                                    <span>Platform Fee</span>
-                                    <span className={styles.feeTotal}>
-                                        ${totalPlatformFee.toFixed(2)}
-                                    </span>
-                                </div>
                                 <div className={`${styles.totalRow} ${styles.grandTotal}`}>
                                     <span>Your Total Cost</span>
                                     <span>${totalOwnerCost.toLocaleString()}</span>
                                 </div>
                             </div>
 
-                            <div className={styles.summaryNote}>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                                </svg>
-                                <span>Platform fee covers verification, matching, and payment processing.</span>
-                            </div>
+
 
                             <div className={styles.approvalNote}>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
