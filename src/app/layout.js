@@ -8,9 +8,9 @@ import { SessionProvider } from '@/components/SessionProvider';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-    title: 'LocumConnect - Pharmacy Staffing Platform',
+    title: 'GinduApp - Pharmacy Staffing Platform',
     description: 'Connect pharmacy owners with licensed pharmacists for temporary shifts. Find locum tenens opportunities or hire qualified pharmacists today.',
-    keywords: 'pharmacy, locum tenens, pharmacist jobs, pharmacy staffing, healthcare staffing',
+    keywords: 'pharmacy, locum tenens, pharmacist jobs, pharmacy staffing, healthcare staffing, GinduApp',
 };
 
 export default function RootLayout({ children }) {

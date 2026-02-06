@@ -155,15 +155,16 @@
 [data-theme="light"] [class*="Title"],
 [data-theme="light"] h1,
 [data-theme="light"] h2,
-[data-theme="light"] h3 {
-    color: #1e3a5f !important;
+[data-theme="light"] h3,
+[data-theme="light"] h4 {
+    color: #0f2744 !important;
     background: none !important;
-    -webkit-text-fill-color: #1e3a5f !important;
+    -webkit-text-fill-color: #0f2744 !important;
 }
 
 /* Keep gradient text for hero */
 [data-theme="light"] [class*="gradientText"] {
-    background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
+    background: linear-gradient(135deg, #2563eb, #4f46e5) !important;
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     background-clip: text !important;
@@ -174,6 +175,80 @@
 [data-theme="light"] [class*="Note"] {
     background: rgba(59, 130, 246, 0.08) !important;
     border-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Light theme - All text elements */
+[data-theme="light"] p,
+[data-theme="light"] span,
+[data-theme="light"] div,
+[data-theme="light"] label,
+[data-theme="light"] li {
+    color: #1e3a5f;
+}
+
+[data-theme="light"] [class*="subtitle"],
+[data-theme="light"] [class*="description"],
+[data-theme="light"] [class*="label"],
+[data-theme="light"] [class*="Label"] {
+    color: #3d5a7a !important;
+}
+
+[data-theme="light"] [class*="muted"],
+[data-theme="light"] [class*="secondary"],
+[data-theme="light"] [class*="hint"] {
+    color: #5a7a9a !important;
+}
+
+/* Light theme - Buttons */
+[data-theme="light"] button:not([class*="Btn"]):not([class*="btn"]) {
+    color: #1e3a5f;
+}
+
+/* Light theme - Links */
+[data-theme="light"] a {
+    color: #2563eb;
+}
+
+[data-theme="light"] a:hover {
+    color: #1d4ed8;
+}
+
+/* Light theme - Navigation text */
+[data-theme="light"] [class*="nav"] span,
+[data-theme="light"] [class*="Nav"] span,
+[data-theme="light"] [class*="userName"],
+[data-theme="light"] [class*="userRole"] {
+    color: #1e3a5f !important;
+}
+
+/* Light theme - Stat cards */
+[data-theme="light"] [class*="stat"] [class*="value"],
+[data-theme="light"] [class*="Stat"] [class*="Value"] {
+    color: #0f2744 !important;
+    -webkit-text-fill-color: #0f2744 !important;
+    background: none !important;
+}
+
+/* Light theme - Badge text */
+[data-theme="light"] [class*="badge"],
+[data-theme="light"] [class*="Badge"] {
+    color: #1e3a5f;
+}
+
+/* Light theme - Table/List items */
+[data-theme="light"] [class*="row"],
+[data-theme="light"] [class*="Row"],
+[data-theme="light"] [class*="item"],
+[data-theme="light"] [class*="Item"] {
+    color: #1e3a5f;
+}
+
+/* Light theme - Footer */
+[data-theme="light"] footer,
+[data-theme="light"] [class*="footer"],
+[data-theme="light"] [class*="Footer"] {
+    background: #e8f2ff !important;
+    color: #3d5a7a !important;
 }
 
 

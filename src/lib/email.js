@@ -34,12 +34,12 @@ export const generateCalendarInvite = (shift, pharmacist, owner) => {
         return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
     };
 
-    const uid = `shift-${shift.id}@locumconnect`;
+    const uid = `shift-${shift.id}@ginduapp`;
     const now = formatICalDate(new Date());
 
     const icalContent = `BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//LocumConnect//Shift Booking//EN
+PRODID:-//GinduApp//Shift Booking//EN
 CALSCALE:GREGORIAN
 METHOD:REQUEST
 BEGIN:VEVENT
@@ -75,7 +75,7 @@ export const sendShiftConfirmationEmail = async (shift, pharmacist, owner) => {
     const calendarInvite = generateCalendarInvite(shift, pharmacist, owner);
 
     const mailOptions = {
-        from: process.env.SMTP_FROM || '"LocumConnect" <noreply@locumconnect.com>',
+        from: process.env.SMTP_FROM || '"GinduApp" <noreply@ginduapp.com>',
         to: pharmacist.email,
         subject: `✅ Shift Confirmed - ${shift.pharmacyName}`,
         html: `
@@ -102,7 +102,7 @@ export const sendShiftConfirmationEmail = async (shift, pharmacist, owner) => {
                     
                     <p>If you have any questions, please contact the pharmacy directly.</p>
                     
-                    <p>Best regards,<br>The LocumConnect Team</p>
+                    <p>Best regards,<br>The GinduApp Team</p>
                 </div>
             </div>
         `,
@@ -134,7 +134,7 @@ export const sendAdminNotificationEmail = async (shift, pharmacist, adminEmail) 
     }
 
     const mailOptions = {
-        from: process.env.SMTP_FROM || '"LocumConnect" <noreply@locumconnect.com>',
+        from: process.env.SMTP_FROM || '"GinduApp" <noreply@ginduapp.com>',
         to: adminEmail,
         subject: `📋 New Shift Assignment - ${pharmacist.name} at ${shift.pharmacyName}`,
         html: `
