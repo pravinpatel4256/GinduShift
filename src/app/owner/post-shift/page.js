@@ -80,7 +80,7 @@ export default function PostShiftPage() {
     const totalHours = calculateTotalHours();
 
     // Rate Logic: Input is Owner Rate. Pharmacist Rate = Owner Rate - 20.
-    const ownerRate = formData.hourlyRate; // This is now "Owner Rate" input
+    const ownerRate = Number(formData.hourlyRate) || 0;
     const pharmacistRate = Math.max(0, ownerRate - 20); // Default rule
     const platformFeePerHr = 20;
 
