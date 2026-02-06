@@ -1,95 +1,64 @@
-.themeToggle {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-/* Single toggle button style */
-.toggleButton {
-    display: none;
-    /* Hidden by default, use button group instead */
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.5rem 0.75rem;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+/* iPhone-style toggle switch */
+.toggle {
+    position: relative;
+    width: 56px;
+    height: 30px;
+    background: #374151;
+    border: none;
+    border-radius: 15px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    color: var(--text-primary);
-    font-size: 0.85rem;
+    padding: 0;
+    transition: background 0.3s ease;
 }
 
-.toggleButton:hover {
-    background: var(--bg-secondary);
-    border-color: var(--border-hover);
+.toggle:hover {
+    background: #4b5563;
 }
 
-.icon {
-    font-size: 1rem;
-}
-
-.label {
-    font-weight: 500;
-}
-
-/* Three button group */
-.buttonGroup {
-    display: flex;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 3px;
-    gap: 2px;
-}
-
-.themeBtn {
+/* Slider knob */
+.slider {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    background: white;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 28px;
-    background: transparent;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.9rem;
-    opacity: 0.6;
+    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-.themeBtn:hover {
-    opacity: 1;
-    background: rgba(99, 102, 241, 0.1);
+.slider.dark {
+    transform: translateX(0);
 }
 
-.themeBtn.active {
-    opacity: 1;
-    background: var(--primary-500);
-    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+.slider.light {
+    transform: translateX(26px);
 }
 
-/* Light theme adjustments */
-[data-theme="light"] .buttonGroup {
-    background: #e8f2ff;
-    border-color: rgba(59, 130, 246, 0.2);
+/* Icon inside slider */
+.icon {
+    font-size: 14px;
+    line-height: 1;
 }
 
-[data-theme="light"] .themeBtn.active {
+/* Light mode styles for the toggle track */
+[data-theme="light"] .toggle {
+    background: #93c5fd;
+}
+
+[data-theme="light"] .toggle:hover {
+    background: #60a5fa;
+}
+
+/* When in light mode, track should look "on" */
+.toggle:has(.light) {
+    background: #60a5fa;
+}
+
+.toggle:has(.light):hover {
     background: #3b82f6;
-}
-
-[data-theme="light"] .themeBtn:hover:not(.active) {
-    background: rgba(59, 130, 246, 0.15);
-}
-
-/* Responsive - show single button on mobile */
-@media (max-width: 640px) {
-    .buttonGroup {
-        display: none;
-    }
-
-    .toggleButton {
-        display: flex;
-    }
 }

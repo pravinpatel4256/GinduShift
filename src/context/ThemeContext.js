@@ -5,52 +5,34 @@ import { createContext, useContext, useState, useEffect } from 'react';
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-    const [theme, setTheme] = useState('system'); // 'light', 'dark', 'system'
-    const [resolvedTheme, setResolvedTheme] = useState('dark');
+    const [theme, setTheme] = useState('dark'); // 'light' or 'dark'
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         // Load saved theme preference
-        const savedTheme = localStorage.getItem('theme') || 'system';
-        setTheme(savedTheme);
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light' || savedTheme === 'dark') {
+            setTheme(savedTheme);
+        }
+        setMounted(true);
     }, []);
 
     useEffect(() => {
-        // Resolve the actual theme based on preference
-        const resolveTheme = () => {
-            if (theme === 'system') {
-                const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                setResolvedTheme(isDark ? 'dark' : 'light');
-            } else {
-                setResolvedTheme(theme);
-            }
-        };
-
-        resolveTheme();
-
-        // Listen for system theme changes
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        const handleChange = () => {
-            if (theme === 'system') {
-                resolveTheme();
-            }
-        };
-        mediaQuery.addEventListener('change', handleChange);
-
-        return () => mediaQuery.removeEventListener('change', handleChange);
-    }, [theme]);
-
-    useEffect(() => {
-        // Apply theme to document
-        document.documentElement.setAttribute('data-theme', resolvedTheme);
-        localStorage.setItem('theme', theme);
-    }, [theme, resolvedTheme]);
+        if (mounted) {
+            // Apply theme to document
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        }
+    }, [theme, mounted]);
 
     const setThemeMode = (newTheme) => {
-        setTheme(newTheme);
+        if (newTheme === 'light' || newTheme === 'dark') {
+            setTheme(newTheme);
+        }
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme: setThemeMode }}>
+        <ThemeContext.Provider value={{ theme, setTheme: setThemeMode }}>
             {children}
         </ThemeContext.Provider>
     );
