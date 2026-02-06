@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import styles from './page.module.css';
+import AddressAutocomplete from '@/components/AddressAutocomplete';
 
 function RegisterContent() {
     const router = useRouter();
@@ -395,9 +396,8 @@ function RegisterContent() {
 
                             <div className={styles.inputGroup}>
                                 <label htmlFor="address" className={styles.label}>Address</label>
-                                <input
+                                <AddressAutocomplete
                                     id="address"
-                                    type="text"
                                     name="address"
                                     value={formData.address}
                                     onChange={handleChange}

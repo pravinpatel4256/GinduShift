@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import AddressAutocomplete from './AddressAutocomplete';
 import styles from './FilterPanel.module.css';
 
 export default function FilterPanel({ onFilter, initialFilters = {} }) {
@@ -63,8 +64,7 @@ export default function FilterPanel({ onFilter, initialFilters = {} }) {
             <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.filterGroup}>
                     <label className={styles.label}>Location</label>
-                    <input
-                        type="text"
+                    <AddressAutocomplete
                         name="location"
                         value={filters.location}
                         onChange={handleChange}

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { calculateOwnerCost, PLATFORM_FEE_PERCENTAGE } from '@/lib/dataStore';
+import AddressAutocomplete from '@/components/AddressAutocomplete';
 import styles from './page.module.css';
 
 export default function PostShiftPage() {
@@ -277,12 +278,11 @@ export default function PostShiftPage() {
                                 </h3>
                                 <div className={styles.inputGroup}>
                                     <label className={styles.label}>Pharmacy Address</label>
-                                    <input
-                                        type="text"
+                                    <AddressAutocomplete
                                         name="location"
                                         value={formData.location}
                                         onChange={handleChange}
-                                        placeholder="Enter the full address"
+                                        placeholder="e.g., 123 Main St, Boston, MA"
                                         className={styles.input}
                                         required
                                     />
