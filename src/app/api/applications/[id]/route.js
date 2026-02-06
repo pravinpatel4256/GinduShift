@@ -43,6 +43,8 @@ export async function PATCH(request, { params }) {
             console.log('📧 Starting email notifications for application:', id);
             console.log('   Pharmacist:', application.pharmacist?.email);
             console.log('   SMTP Host:', process.env.SMTP_HOST ? 'Configured' : 'Missing');
+            console.log('   SMTP User:', process.env.SMTP_USER);
+            console.log('   SMTP Pass Length:', process.env.SMTP_PASS ? process.env.SMTP_PASS.trim().length : 0);
 
             try {
                 // Send email to pharmacist with calendar invite
