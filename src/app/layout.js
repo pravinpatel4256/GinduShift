@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 import Navigation from '@/components/Navigation';
 import { SessionProvider } from '@/components/SessionProvider';
 
@@ -14,13 +15,15 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
     return (
-        <html lang="en">
+        <html lang="en" suppressHydrationWarning>
             <body className={inter.className}>
                 <SessionProvider>
-                    <AuthProvider>
-                        <Navigation />
-                        <main>{children}</main>
-                    </AuthProvider>
+                    <ThemeProvider>
+                        <AuthProvider>
+                            <Navigation />
+                            <main>{children}</main>
+                        </AuthProvider>
+                    </ThemeProvider>
                 </SessionProvider>
             </body>
         </html>

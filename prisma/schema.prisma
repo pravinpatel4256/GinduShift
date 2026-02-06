@@ -65,6 +65,12 @@ model Shift {
   description  String?
   requirements String?  // Stored as JSON array string
   
+  // Accommodation & Travel Benefits
+  accommodationProvided Boolean @default(false)
+  accommodationDetails  String? // Description or allowance amount
+  mileageAllowance      Boolean @default(false)
+  mileageRate           Float?  // Rate per mile/km
+  
   // Approval workflow: pending_review -> open -> filled/cancelled
   status       String   @default("pending_review") // 'pending_review', 'open', 'filled', 'cancelled', 'rejected'
   adminNotes   String?  // Notes from admin during review

@@ -226,6 +226,11 @@ export const createShift = async (shiftData) => {
             totalHours: shiftData.totalHours,
             description: shiftData.description,
             requirements: shiftData.requirements ? JSON.stringify(shiftData.requirements) : null,
+            // Accommodation & Travel
+            accommodationProvided: shiftData.accommodationProvided || false,
+            accommodationDetails: shiftData.accommodationDetails || null,
+            mileageAllowance: shiftData.mileageAllowance || false,
+            mileageRate: shiftData.mileageRate || null,
             status: 'pending_review' // New shifts require admin approval
         },
         include: { owner: true }
@@ -314,6 +319,18 @@ export const getApplicationsForOwner = async (ownerId) => {
         where: {
             shift: { ownerId }
         },
+        orderBy: { appliedAt: 'desc' },
+        include: {
+            shift: { include: { owner: true } },
+            pharmacist: true
+        }
+    });
+    return applications.map(parseApplication);
+};
+
+export const getApplicationsByStatus = async (status) => {
+    const applications = await prisma.application.findMany({
+        where: { status },
         orderBy: { appliedAt: 'desc' },
         include: {
             shift: { include: { owner: true } },

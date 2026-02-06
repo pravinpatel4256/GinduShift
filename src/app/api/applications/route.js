@@ -4,6 +4,7 @@ import {
     getApplicationsByShift,
     getApplicationsByPharmacist,
     getApplicationsForOwner,
+    getApplicationsByStatus,
     createApplication
 } from '@/lib/db';
 
@@ -13,6 +14,7 @@ export async function GET(request) {
         const shiftId = searchParams.get('shiftId');
         const pharmacistId = searchParams.get('pharmacistId');
         const ownerId = searchParams.get('ownerId');
+        const status = searchParams.get('status');
 
         if (shiftId) {
             const applications = await getApplicationsByShift(shiftId);
@@ -26,6 +28,11 @@ export async function GET(request) {
 
         if (ownerId) {
             const applications = await getApplicationsForOwner(ownerId);
+            return NextResponse.json(applications);
+        }
+
+        if (status) {
+            const applications = await getApplicationsByStatus(status);
             return NextResponse.json(applications);
         }
 

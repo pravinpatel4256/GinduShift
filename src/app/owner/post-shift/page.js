@@ -20,7 +20,12 @@ export default function PostShiftPage() {
         hourlyRate: 60,
         location: '',
         description: '',
-        requirements: ''
+        requirements: '',
+        // Accommodation & Travel
+        accommodationProvided: false,
+        accommodationDetails: '',
+        mileageAllowance: false,
+        mileageRate: ''
     });
 
     useEffect(() => {
@@ -41,10 +46,11 @@ export default function PostShiftPage() {
     }, [user, loading, isOwner, router]);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: name === 'hourlyRate' || name === 'hoursPerDay' ? Number(value) : value
+            [name]: type === 'checkbox' ? checked :
+                (name === 'hourlyRate' || name === 'hoursPerDay' || name === 'mileageRate') ? Number(value) : value
         }));
     };
 
@@ -82,7 +88,12 @@ export default function PostShiftPage() {
             hourlyRate: formData.hourlyRate,
             totalHours: totalHours,
             description: formData.description,
-            requirements: requirementsArray
+            requirements: requirementsArray,
+            // Accommodation & Travel
+            accommodationProvided: formData.accommodationProvided,
+            accommodationDetails: formData.accommodationDetails || null,
+            mileageAllowance: formData.mileageAllowance,
+            mileageRate: formData.mileageRate ? Number(formData.mileageRate) : null
         };
 
         try {
@@ -299,6 +310,81 @@ export default function PostShiftPage() {
                                         placeholder="e.g., State license, Immunization certified, Retail experience"
                                         className={styles.input}
                                     />
+                                </div>
+                            </div>
+
+                            {/* Accommodation & Travel Benefits */}
+                            <div className={styles.formGroup}>
+                                <h3 className={styles.groupTitle}>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                    </svg>
+                                    Travel & Accommodation Benefits
+                                </h3>
+
+                                {/* Accommodation Toggle */}
+                                <div className={styles.toggleGroup}>
+                                    <label className={styles.toggleLabel}>
+                                        <input
+                                            type="checkbox"
+                                            name="accommodationProvided"
+                                            checked={formData.accommodationProvided}
+                                            onChange={handleChange}
+                                            className={styles.checkbox}
+                                        />
+                                        <span className={styles.toggleText}>
+                                            <strong>Accommodation Provided</strong>
+                                            <span>Will you provide lodging or cover accommodation expenses?</span>
+                                        </span>
+                                    </label>
+                                    {formData.accommodationProvided && (
+                                        <div className={styles.conditionalInput}>
+                                            <input
+                                                type="text"
+                                                name="accommodationDetails"
+                                                value={formData.accommodationDetails}
+                                                onChange={handleChange}
+                                                placeholder="e.g., Hotel provided, $150/night allowance, Staff housing available"
+                                                className={styles.input}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Mileage Toggle */}
+                                <div className={styles.toggleGroup}>
+                                    <label className={styles.toggleLabel}>
+                                        <input
+                                            type="checkbox"
+                                            name="mileageAllowance"
+                                            checked={formData.mileageAllowance}
+                                            onChange={handleChange}
+                                            className={styles.checkbox}
+                                        />
+                                        <span className={styles.toggleText}>
+                                            <strong>Mileage/Travel Allowance</strong>
+                                            <span>Will you reimburse travel expenses?</span>
+                                        </span>
+                                    </label>
+                                    {formData.mileageAllowance && (
+                                        <div className={styles.conditionalInput}>
+                                            <div className={styles.rateInput}>
+                                                <span className={styles.ratePrefix}>$</span>
+                                                <input
+                                                    type="number"
+                                                    name="mileageRate"
+                                                    value={formData.mileageRate}
+                                                    onChange={handleChange}
+                                                    placeholder="0.67"
+                                                    step="0.01"
+                                                    min="0"
+                                                    className={styles.input}
+                                                />
+                                                <span className={styles.rateSuffix}>per mile</span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
