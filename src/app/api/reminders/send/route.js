@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { getApplicationById } from '@/lib/db';
 import { sendShiftReminderEmail } from '@/lib/email';
-import { getUser } from '@/lib/auth';
 
 export async function POST(request) {
     try {
-        const user = await getUser();
+        const session = await getServerSession(authOptions);
+        const user = session?.user;
+
         if (!user || user.role !== 'admin') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
