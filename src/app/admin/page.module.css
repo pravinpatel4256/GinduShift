@@ -479,3 +479,43 @@
         padding: 0 1rem;
     }
 }
+
+.inputWrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+}
+
+.rateInput {
+    width: 100px;
+    padding: 0.4rem 2rem 0.4rem 0.75rem;
+    /* Space for icon on right */
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 8px;
+    color: #f1f5f9;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.rateInput:focus {
+    outline: none;
+    border-color: #6366f1;
+    background: rgba(15, 23, 42, 0.9);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.editIcon {
+    position: absolute;
+    right: 8px;
+    color: #94a3b8;
+    pointer-events: none;
+    transition: color 0.2s ease;
+}
+
+.inputWrapper:hover .editIcon,
+.rateInput:focus+.editIcon {
+    color: #a5b4fc;
+}

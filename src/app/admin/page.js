@@ -350,13 +350,20 @@ export default function AdminDashboard() {
                                             </div>
                                             <div className={styles.shiftDetail}>
                                                 <span className={styles.shiftLabel}>Pharm Rate</span>
-                                                <input
-                                                    type="number"
-                                                    value={modifiedRates[shift.id] ?? shift.hourlyRate}
-                                                    onChange={(e) => setModifiedRates(prev => ({ ...prev, [shift.id]: Number(e.target.value) }))}
-                                                    className={styles.rateInput}
-                                                    style={{ width: '80px', padding: '4px', borderRadius: '4px', border: '1px solid #ccc' }}
-                                                />
+                                                <div className={styles.inputWrapper}>
+                                                    <input
+                                                        type="number"
+                                                        value={modifiedRates[shift.id] ?? shift.hourlyRate}
+                                                        onChange={(e) => setModifiedRates(prev => ({ ...prev, [shift.id]: Number(e.target.value) }))}
+                                                        className={styles.rateInput}
+                                                    />
+                                                    <svg
+                                                        className={styles.editIcon}
+                                                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                                                    >
+                                                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                                                    </svg>
+                                                </div>
                                             </div>
                                             <div className={styles.shiftDetail}>
                                                 <span className={styles.shiftLabel}>Total Hours</span>
