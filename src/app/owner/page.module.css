@@ -420,37 +420,62 @@
     gap: 0.5rem;
 }
 
-.actionBtn {
+.badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.5rem 0.85rem;
+    justify-content: center;
+    background: #ef4444;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    margin-left: 0.75rem;
+    vertical-align: middle;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6rem 1.25rem;
     border-radius: 8px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    border: none;
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    border: none;
+    outline: none;
+    gap: 0.5rem;
 }
 
-.approveBtn {
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    color: #10b981;
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
 }
 
-.approveBtn:hover {
-    background: rgba(16, 185, 129, 0.2);
+.btnSuccess {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
-.rejectBtn {
+.btnSuccess:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+}
+
+.btnDanger {
     background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
     color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
-.rejectBtn:hover {
+.btnDanger:hover:not(:disabled) {
     background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
 }
 
 /* Responsive */
