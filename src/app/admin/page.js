@@ -16,6 +16,7 @@ export default function AdminDashboard() {
     const [updating, setUpdating] = useState(null);
     const [activeTab, setActiveTab] = useState('pharmacists');
     const [rejectNotes, setRejectNotes] = useState({});
+    const [modifiedRates, setModifiedRates] = useState({});
 
     useEffect(() => {
         if (!loading && !user) {
@@ -85,7 +86,8 @@ export default function AdminDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action,
-                    adminNotes: rejectNotes[shiftId] || null
+                    adminNotes: rejectNotes[shiftId] || null,
+                    hourlyRate: action === 'approve' ? (modifiedRates[shiftId] || undefined) : undefined
                 })
             });
 
@@ -343,8 +345,18 @@ export default function AdminDashboard() {
                                                 <span>{shift.startTime} - {shift.endTime}</span>
                                             </div>
                                             <div className={styles.shiftDetail}>
-                                                <span className={styles.shiftLabel}>Rate</span>
-                                                <span>${shift.hourlyRate}/hr</span>
+                                                <span className={styles.shiftLabel}>Owner Pay</span>
+                                                <span>${shift.ownerRate ? shift.ownerRate : (shift.hourlyRate + 20)}/hr</span>
+                                            </div>
+                                            <div className={styles.shiftDetail}>
+                                                <span className={styles.shiftLabel}>Pharm Rate</span>
+                                                <input
+                                                    type="number"
+                                                    value={modifiedRates[shift.id] ?? shift.hourlyRate}
+                                                    onChange={(e) => setModifiedRates(prev => ({ ...prev, [shift.id]: Number(e.target.value) }))}
+                                                    className={styles.rateInput}
+                                                    style={{ width: '80px', padding: '4px', borderRadius: '4px', border: '1px solid #ccc' }}
+                                                />
                                             </div>
                                             <div className={styles.shiftDetail}>
                                                 <span className={styles.shiftLabel}>Total Hours</span>

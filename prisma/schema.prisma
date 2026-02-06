@@ -59,6 +59,7 @@ model Shift {
   startTime    String   // Format: HH:MM
   endTime      String   // Format: HH:MM
   hoursPerDay  Int
+  ownerRate    Float?   // What owner pays
   hourlyRate   Float    // What pharmacist earns
   totalHours   Int
   

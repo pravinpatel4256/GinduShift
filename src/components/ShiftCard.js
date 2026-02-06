@@ -13,9 +13,10 @@ export default function ShiftCard({
     hasApplied = false,
     applicationStatus = null
 }) {
-    const ownerCost = calculateOwnerCost(shift.hourlyRate);
+    const ownerCost = shift.ownerRate || calculateOwnerCost(shift.hourlyRate);
     const totalPharmacistEarnings = shift.hourlyRate * shift.totalHours;
     const totalOwnerCost = ownerCost * shift.totalHours;
+    const platformFee = ownerCost - shift.hourlyRate;
 
     const formatDate = (dateStr) => {
         return new Date(dateStr).toLocaleDateString('en-US', {
@@ -96,8 +97,8 @@ export default function ShiftCard({
                                 <span>${shift.hourlyRate}/hr</span>
                             </div>
                             <div className={styles.breakdownRow}>
-                                <span>Platform Fee ({PLATFORM_FEE_PERCENTAGE}%):</span>
-                                <span>${(ownerCost - shift.hourlyRate).toFixed(2)}/hr</span>
+                                <span>Platform Fee:</span>
+                                <span>${platformFee.toFixed(2)}/hr</span>
                             </div>
                             <div className={`${styles.breakdownRow} ${styles.totalRow}`}>
                                 <span>Your Cost:</span>

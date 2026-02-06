@@ -55,6 +55,20 @@ export default function PostShiftPage() {
         }));
     };
 
+    useEffect(() => {
+        if (formData.startTime && formData.endTime) {
+            const [startH, startM] = formData.startTime.split(':').map(Number);
+            const [endH, endM] = formData.endTime.split(':').map(Number);
+            let hours = (endH - startH) + (endM - startM) / 60;
+            if (hours <= 0) hours += 24; // Handle overnight or invalid
+
+            // Round to 2 decimal places
+            hours = Math.round(hours * 100) / 100;
+
+            setFormData(prev => ({ ...prev, hoursPerDay: hours }));
+        }
+    }, [formData.startTime, formData.endTime]);
+
     const calculateTotalHours = () => {
         if (!formData.startDate || !formData.endDate) return 0;
         const start = new Date(formData.startDate);
@@ -64,10 +78,15 @@ export default function PostShiftPage() {
     };
 
     const totalHours = calculateTotalHours();
-    const ownerCost = calculateOwnerCost(formData.hourlyRate);
-    const totalPharmacistEarnings = formData.hourlyRate * totalHours;
-    const totalOwnerCost = ownerCost * totalHours;
-    const platformFee = totalOwnerCost - totalPharmacistEarnings;
+
+    // Rate Logic: Input is Owner Rate. Pharmacist Rate = Owner Rate - 20.
+    const ownerRate = formData.hourlyRate; // This is now "Owner Rate" input
+    const pharmacistRate = Math.max(0, ownerRate - 20); // Default rule
+    const platformFeePerHr = 20;
+
+    const totalPharmacistEarnings = pharmacistRate * totalHours;
+    const totalOwnerCost = ownerRate * totalHours;
+    const totalPlatformFee = platformFeePerHr * totalHours;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -86,7 +105,8 @@ export default function PostShiftPage() {
             startTime: formData.startTime,
             endTime: formData.endTime,
             hoursPerDay: formData.hoursPerDay,
-            hourlyRate: formData.hourlyRate,
+            ownerRate: ownerRate,           // Save Owner Rate
+            hourlyRate: pharmacistRate,     // Save Pharmacist Rate (calculated)
             totalHours: totalHours,
             description: formData.description,
             requirements: requirementsArray,
@@ -279,7 +299,7 @@ export default function PostShiftPage() {
                                     Hourly Rate
                                 </h3>
                                 <div className={styles.inputGroup}>
-                                    <label className={styles.label}>Pharmacist Rate ($/hr)</label>
+                                    <label className={styles.label}>Your Offer Rate ($/hr)</label>
                                     <input
                                         type="number"
                                         name="hourlyRate"
@@ -291,7 +311,7 @@ export default function PostShiftPage() {
                                         required
                                     />
                                     <span className={styles.inputHint}>
-                                        This is what the pharmacist will earn per hour
+                                        Total rate (Pharmacist receives this minus $20/hr fee)
                                     </span>
                                 </div>
                             </div>
@@ -435,16 +455,16 @@ export default function PostShiftPage() {
 
                             <div className={styles.summaryDetails}>
                                 <div className={styles.summaryRow}>
-                                    <span>Pharmacist Rate</span>
-                                    <span>${formData.hourlyRate}/hr</span>
+                                    <span>Your Offer Rate</span>
+                                    <span>${ownerRate.toFixed(2)}/hr</span>
                                 </div>
                                 <div className={styles.summaryRow}>
-                                    <span>Platform Fee ({PLATFORM_FEE_PERCENTAGE}%)</span>
-                                    <span>${(ownerCost - formData.hourlyRate).toFixed(2)}/hr</span>
+                                    <span>Platform Fee</span>
+                                    <span>$20.00/hr</span>
                                 </div>
                                 <div className={`${styles.summaryRow} ${styles.highlight}`}>
-                                    <span>Your Cost</span>
-                                    <span>${ownerCost.toFixed(2)}/hr</span>
+                                    <span>Pharmacist Receives</span>
+                                    <span>${pharmacistRate.toFixed(2)}/hr</span>
                                 </div>
                             </div>
 
@@ -469,7 +489,7 @@ export default function PostShiftPage() {
                                 <div className={styles.totalRow}>
                                     <span>Platform Fee</span>
                                     <span className={styles.feeTotal}>
-                                        ${platformFee.toFixed(2)}
+                                        ${totalPlatformFee.toFixed(2)}
                                     </span>
                                 </div>
                                 <div className={`${styles.totalRow} ${styles.grandTotal}`}>

@@ -26,11 +26,11 @@ export async function GET(request, { params }) {
 export async function PATCH(request, { params }) {
     try {
         const { id } = await params;
-        const { status, action, adminNotes } = await request.json();
+        const { status, action, adminNotes, hourlyRate } = await request.json();
 
         // Handle admin approval/rejection
         if (action === 'approve') {
-            const shift = await approveShift(id, adminNotes);
+            const shift = await approveShift(id, adminNotes, hourlyRate);
             return NextResponse.json(shift);
         }
 

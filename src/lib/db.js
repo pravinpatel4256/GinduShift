@@ -223,6 +223,7 @@ export const createShift = async (shiftData) => {
             endTime: shiftData.endTime,
             hoursPerDay: shiftData.hoursPerDay,
             hourlyRate: shiftData.hourlyRate,
+            ownerRate: shiftData.ownerRate,  // Added ownerRate
             totalHours: shiftData.totalHours,
             description: shiftData.description,
             requirements: shiftData.requirements ? JSON.stringify(shiftData.requirements) : null,
@@ -251,8 +252,20 @@ export const updateShiftStatus = async (shiftId, status, adminNotes = null) => {
 };
 
 // Admin approves a shift for pharmacist viewing
-export const approveShift = async (shiftId, adminNotes = null) => {
-    return updateShiftStatus(shiftId, 'open', adminNotes);
+export const approveShift = async (shiftId, adminNotes = null, hourlyRate = null) => {
+    const data = {
+        status: 'open',
+        adminNotes: adminNotes || undefined,
+    };
+    if (hourlyRate !== null && hourlyRate !== undefined) {
+        data.hourlyRate = Number(hourlyRate);
+    }
+    const shift = await prisma.shift.update({
+        where: { id: shiftId },
+        data,
+        include: { owner: true }
+    });
+    return parseShift(shift);
 };
 
 // Admin rejects a shift
