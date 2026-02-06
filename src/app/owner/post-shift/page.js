@@ -11,6 +11,7 @@ export default function PostShiftPage() {
     const { user, loading, isOwner } = useAuth();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState('');
     const [formData, setFormData] = useState({
         startDate: '',
         endDate: '',
@@ -103,14 +104,18 @@ export default function PostShiftPage() {
                 body: JSON.stringify(shiftData)
             });
 
+            const data = await response.json();
+
             if (response.ok) {
                 router.push('/owner');
             } else {
-                console.error('Failed to create shift');
+                console.error('Failed to create shift:', data);
+                setError(data.error || 'Failed to create shift. Please try again.');
                 setIsSubmitting(false);
             }
         } catch (error) {
             console.error('Error creating shift:', error);
+            setError('Network error. Please check your connection and try again.');
             setIsSubmitting(false);
         }
     };
@@ -142,6 +147,19 @@ export default function PostShiftPage() {
                         </header>
 
                         <form onSubmit={handleSubmit} className={styles.form}>
+                            {/* Error Display */}
+                            {error && (
+                                <div style={{
+                                    padding: '1rem',
+                                    background: 'rgba(239, 68, 68, 0.1)',
+                                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                                    borderRadius: '10px',
+                                    color: '#ef4444',
+                                    marginBottom: '1rem'
+                                }}>
+                                    ⚠️ {error}
+                                </div>
+                            )}
                             {/* Date Range */}
                             <div className={styles.formGroup}>
                                 <h3 className={styles.groupTitle}>

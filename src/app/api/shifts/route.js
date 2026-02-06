@@ -62,12 +62,26 @@ export async function GET(request) {
 export async function POST(request) {
     try {
         const shiftData = await request.json();
+        console.log('Creating shift with data:', JSON.stringify(shiftData, null, 2));
+
+        // Validate required fields
+        if (!shiftData.ownerId) {
+            return NextResponse.json({ error: 'Owner ID is required' }, { status: 400 });
+        }
+        if (!shiftData.startDate || !shiftData.endDate) {
+            return NextResponse.json({ error: 'Start and end dates are required' }, { status: 400 });
+        }
+        if (!shiftData.location) {
+            return NextResponse.json({ error: 'Location is required' }, { status: 400 });
+        }
+
         const shift = await createShift(shiftData);
+        console.log('Shift created successfully:', shift.id);
         return NextResponse.json(shift, { status: 201 });
     } catch (error) {
         console.error('Create shift error:', error);
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { error: error.message || 'Internal server error' },
             { status: 500 }
         );
     }
