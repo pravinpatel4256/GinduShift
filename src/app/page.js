@@ -1,14 +1,23 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import styles from './page.module.css';
 
 export default function Home() {
-    const { user, loading } = useAuth();
+    const { user, loading, status } = useAuth();
     const router = useRouter();
+    const [debugInfo, setDebugInfo] = useState(null);
+
+    // Fetch debug info on mount
+    useEffect(() => {
+        fetch('/api/debug')
+            .then(res => res.json())
+            .then(data => setDebugInfo(data))
+            .catch(err => setDebugInfo({ error: err.message }));
+    }, []);
 
     useEffect(() => {
         if (!loading && user) {
@@ -53,6 +62,41 @@ export default function Home() {
 
     return (
         <div className={styles.page}>
+            {/* Debug Panel - REMOVE AFTER DEBUGGING */}
+            <div style={{
+                background: '#1a1a2e',
+                color: '#0f0',
+                padding: '20px',
+                fontFamily: 'monospace',
+                fontSize: '12px',
+                marginBottom: '20px',
+                borderRadius: '8px',
+                maxWidth: '800px',
+                margin: '20px auto'
+            }}>
+                <h3 style={{ color: '#fff', marginBottom: '10px' }}>🔧 Debug Panel (Remove after fixing)</h3>
+                <div><strong>Client Auth Status:</strong> {status || 'unknown'}</div>
+                <div><strong>User Object:</strong> {user ? JSON.stringify(user) : 'null'}</div>
+                <div><strong>Loading:</strong> {String(loading)}</div>
+                <hr style={{ margin: '10px 0', borderColor: '#333' }} />
+                {debugInfo ? (
+                    <>
+                        <div><strong>NEXTAUTH_URL:</strong> {debugInfo.environment?.NEXTAUTH_URL}</div>
+                        <div><strong>NODE_ENV:</strong> {debugInfo.environment?.NODE_ENV}</div>
+                        <div><strong>VERCEL_URL:</strong> {debugInfo.environment?.VERCEL_URL}</div>
+                        <div><strong>Has Secret:</strong> {String(debugInfo.environment?.hasSecret)}</div>
+                        <div><strong>Has Google Credentials:</strong> {String(debugInfo.environment?.hasGoogleId && debugInfo.environment?.hasGoogleSecret)}</div>
+                        <hr style={{ margin: '10px 0', borderColor: '#333' }} />
+                        <div><strong>Server Session Exists:</strong> {String(debugInfo.session?.exists)}</div>
+                        <div><strong>Server Session User:</strong> {debugInfo.session?.user ? JSON.stringify(debugInfo.session.user) : 'null'}</div>
+                        <hr style={{ margin: '10px 0', borderColor: '#333' }} />
+                        <div><strong>Request Host:</strong> {debugInfo.headers?.host}</div>
+                    </>
+                ) : (
+                    <div>Loading debug info...</div>
+                )}
+            </div>
+
             {/* Hero Section */}
             <section className={styles.hero}>
                 <div className={styles.heroContent}>

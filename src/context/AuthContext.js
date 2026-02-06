@@ -1,24 +1,41 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useSession, signOut as nextAuthSignOut } from 'next-auth/react';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+    const { data: session, status } = useSession();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Check for existing session
-        const savedUser = localStorage.getItem('locum_user');
-        if (savedUser) {
-            const parsedUser = JSON.parse(savedUser);
-            // Refresh user data from server
-            refreshUser(parsedUser.id);
-        } else {
+        // If NextAuth session exists, use it
+        if (status === 'authenticated' && session?.user) {
+            setUser({
+                id: session.user.id,
+                email: session.user.email,
+                name: session.user.name,
+                role: session.user.role,
+                image: session.user.image,
+                verificationStatus: session.user.verificationStatus
+            });
             setLoading(false);
+        } else if (status === 'unauthenticated') {
+            // Check for legacy localStorage session (email/password login)
+            const savedUser = localStorage.getItem('locum_user');
+            if (savedUser) {
+                const parsedUser = JSON.parse(savedUser);
+                refreshUser(parsedUser.id);
+            } else {
+                setUser(null);
+                setLoading(false);
+            }
+        } else if (status === 'loading') {
+            setLoading(true);
         }
-    }, []);
+    }, [session, status]);
 
     const refreshUser = async (userId) => {
         try {
@@ -62,9 +79,12 @@ export function AuthProvider({ children }) {
         }
     };
 
-    const logout = () => {
+    const logout = async () => {
+        // Clear both NextAuth session and localStorage
         setUser(null);
         localStorage.removeItem('locum_user');
+        // Sign out from NextAuth (for Google sessions)
+        await nextAuthSignOut({ redirect: false });
     };
 
     const isAdmin = user?.role === 'admin';
@@ -76,6 +96,7 @@ export function AuthProvider({ children }) {
         <AuthContext.Provider value={{
             user,
             loading,
+            status, // Expose NextAuth status for debugging
             login,
             logout,
             refreshUser: () => user && refreshUser(user.id),
