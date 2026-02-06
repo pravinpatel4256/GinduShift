@@ -1,10 +1,46 @@
 .themeToggle {
     display: flex;
-    gap: 0.25rem;
-    padding: 0.25rem;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Single toggle button style */
+.toggleButton {
+    display: none;
+    /* Hidden by default, use button group instead */
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
     background: var(--bg-tertiary);
-    border-radius: 10px;
     border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+}
+
+.toggleButton:hover {
+    background: var(--bg-secondary);
+    border-color: var(--border-hover);
+}
+
+.icon {
+    font-size: 1rem;
+}
+
+.label {
+    font-weight: 500;
+}
+
+/* Three button group */
+.buttonGroup {
+    display: flex;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
 }
 
 .themeBtn {
@@ -12,23 +48,48 @@
     align-items: center;
     justify-content: center;
     width: 32px;
-    height: 32px;
-    border: none;
-    border-radius: 8px;
+    height: 28px;
     background: transparent;
+    border: none;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
+    font-size: 0.9rem;
+    opacity: 0.6;
 }
 
 .themeBtn:hover {
-    background: var(--bg-secondary);
+    opacity: 1;
+    background: rgba(99, 102, 241, 0.1);
 }
 
 .themeBtn.active {
+    opacity: 1;
     background: var(--primary-500);
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
 }
 
-.icon {
-    font-size: 1rem;
+/* Light theme adjustments */
+[data-theme="light"] .buttonGroup {
+    background: #e8f2ff;
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .themeBtn.active {
+    background: #3b82f6;
+}
+
+[data-theme="light"] .themeBtn:hover:not(.active) {
+    background: rgba(59, 130, 246, 0.15);
+}
+
+/* Responsive - show single button on mobile */
+@media (max-width: 640px) {
+    .buttonGroup {
+        display: none;
+    }
+
+    .toggleButton {
+        display: flex;
+    }
 }
