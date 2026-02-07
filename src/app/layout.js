@@ -12,6 +12,19 @@ export const metadata = {
     title: 'GinduApp - Pharmacy Staffing Platform',
     description: 'Connect pharmacy owners with licensed pharmacists for temporary shifts. Find locum tenens opportunities or hire qualified pharmacists today.',
     keywords: 'pharmacy, locum tenens, pharmacist jobs, pharmacy staffing, healthcare staffing, GinduApp',
+    manifest: '/manifest.json',
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: 'default',
+        title: 'GinduShift',
+    },
+};
+
+export const viewport = {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    themeColor: '#6366f1',
 };
 
 export default function RootLayout({ children }) {
